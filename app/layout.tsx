@@ -1,26 +1,20 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-const geistSans = localFont({
-  src: [
-    { path: "../public/fonts/GeistVF.woff2", style: "normal" },
-  ],
+const geistSans = Geist({
   variable: "--font-geist-sans",
-  fallback: ["system-ui", "sans-serif"],
+  subsets: ["latin"],
   display: "swap",
 });
 
-const geistMono = localFont({
-  src: [
-    { path: "../public/fonts/GeistMonoVF.woff2", style: "normal" },
-  ],
+const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
-  fallback: ["ui-monospace", "monospace"],
+  subsets: ["latin"],
   display: "swap",
 });
 

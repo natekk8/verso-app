@@ -32,27 +32,27 @@ export function ManageSidebar({ tournamentId }: ManageSidebarProps) {
   ];
 
   return (
-    <div className="flex flex-col w-[64px] lg:w-[220px] shrink-0 h-screen sticky top-0 bg-background/95 backdrop-blur border-r border-border/50 z-20">
+    <div className="flex flex-col w-[64px] lg:w-[240px] shrink-0 h-screen sticky top-0 bg-zinc-950 border-r border-zinc-800/50 z-20">
       
-      {/* Logo & Back button */}
-      <div className="p-4 flex flex-col gap-4 border-b border-border/50">
-        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(59,130,246,0.3)]">
-            <span className="text-white font-bold text-sm tracking-tighter">V</span>
+      {/* Premium Logo & Back button */}
+      <div className="p-5 flex flex-col gap-6 border-b border-zinc-800/50">
+        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80 group">
+          <div className="relative flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700/50 shadow-inner group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all">
+            <span className="text-transparent bg-clip-text bg-gradient-to-b from-zinc-100 to-zinc-400 font-bold text-lg tracking-tighter">V</span>
           </div>
-          <span className="font-bold tracking-widest text-sm hidden lg:block">VERSO</span>
+          <span className="font-semibold tracking-widest text-sm hidden lg:block text-zinc-100">VERSO</span>
         </Link>
         <Link
           href="/"
-          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors h-8"
+          className="flex items-center gap-2 text-xs font-medium text-zinc-500 hover:text-zinc-300 transition-colors h-6"
         >
           <ArrowLeft weight="bold" className="w-4 h-4 shrink-0" />
-          <span className="hidden lg:block">Wróć do listy</span>
+          <span className="hidden lg:block">Panel główny</span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-4 flex flex-col gap-1 px-2">
+      <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3">
         {items.map((item, index) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -67,22 +67,22 @@ export function ManageSidebar({ tournamentId }: ManageSidebarProps) {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-md transition-all group relative",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all group relative overflow-hidden",
                   isActive
-                    ? "bg-blue-500/10 text-blue-500 font-medium"
-                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50 dark:hover:bg-zinc-800/50 light:hover:bg-zinc-100"
+                    ? "bg-blue-500/10 text-blue-400 font-medium border border-blue-500/20 shadow-[inset_0_1px_0_rgba(59,130,246,0.1)]"
+                    : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/40 border border-transparent"
                 )}
-                title={item.label} // tooltip for small screen
+                title={item.label}
               >
                 <Icon
-                  weight={isActive ? "fill" : "bold"}
-                  className="w-5 h-5 shrink-0"
+                  weight={isActive ? "fill" : "regular"}
+                  className={cn("w-5 h-5 shrink-0 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")}
                 />
                 <span className="text-sm hidden lg:block">{item.label}</span>
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active-indicator"
-                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-blue-500 rounded-r-full"
+                    className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.8)]"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
@@ -92,9 +92,16 @@ export function ManageSidebar({ tournamentId }: ManageSidebarProps) {
         })}
       </div>
 
-      {/* Footer / Theme toggle */}
-      <div className="p-4 border-t border-border/50 flex items-center justify-center lg:justify-start">
+      {/* Footer / Theme toggle & QR Code */}
+      <div className="p-4 border-t border-zinc-800/50 flex flex-col lg:flex-row items-center justify-between gap-4">
         <ThemeToggle />
+        <Link href={`/t/${tournamentId}/public`} target="_blank" className="hidden lg:flex items-center gap-2 text-xs text-blue-400 hover:text-blue-300 transition-colors px-2 py-1.5 rounded bg-blue-500/10 border border-blue-500/20">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+          </span>
+          Live
+        </Link>
       </div>
     </div>
   );

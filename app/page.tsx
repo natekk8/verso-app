@@ -99,10 +99,8 @@ export default function DashboardPage() {
             <h1 className="text-2xl font-semibold tracking-tight">Twoje turnieje</h1>
             
             <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-[0_0_14px_rgba(37,99,235,0.2)]">
-                  <Plus weight="bold" className="mr-2 h-4 w-4" /> Nowy turniej
-                </Button>
+              <DialogTrigger className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-9 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white border-0 shadow-[0_0_14px_rgba(37,99,235,0.2)]">
+                <Plus weight="bold" className="mr-2 h-4 w-4" /> Nowy turniej
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -159,8 +157,8 @@ export default function DashboardPage() {
                 Nie zarządzasz jeszcze żadnym turniejem. Utwórz swój pierwszy turniej, aby zacząć.
               </p>
               <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="outline">Rozpocznij</Button>
+                <DialogTrigger className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-9 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground">
+                  Rozpocznij
                 </DialogTrigger>
                 {/* Same dialog content could be abstracted, but keeping simple for now */}
               </Dialog>

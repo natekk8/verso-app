@@ -24,7 +24,7 @@ export default function ManagePhasePage({
     setAdminToken(getAdminToken(tournamentId));
   }, [tournamentId]);
 
-  const t = useQuery(api.tournaments.getById, { id: tournamentId as Id<"tournaments"> });
+  const t = useQuery(api.tournaments.get, { id: tournamentId as Id<"tournaments"> });
   const phase = useQuery(api.phases.getByTournament, { tournamentId: tournamentId as Id<"tournaments"> })?.find(p => p._id === phaseId);
   const groups = useQuery(api.groups.getByPhase, { phaseId: phaseId as Id<"phases"> });
   const allPlayers = useQuery(api.players.getByTournament, { tournamentId: tournamentId as Id<"tournaments"> });

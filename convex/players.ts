@@ -5,11 +5,11 @@ import { v } from "convex/values";
 
 /** Throws if the provided adminToken doesn't match the tournament's adminToken. */
 async function verifyAdmin(
-  ctx: Parameters<typeof query>[0]["ctx"] | Parameters<typeof mutation>[0]["ctx"],
+  ctx: any,
   tournamentId: string,
   adminToken: string
 ) {
-  const t = await (ctx as any).db.get(tournamentId as any);
+  const t = await ctx.db.get(tournamentId);
   if (!t) throw new Error("Turniej nie znaleziony.");
   if (t.adminToken !== adminToken) throw new Error("Nieprawidłowy token administratora.");
   return t;

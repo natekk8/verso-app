@@ -48,6 +48,7 @@ export const create = mutation({
       phaseId,
       name,
       playerIds,
+      order: 0,
     });
 
     return groupId;

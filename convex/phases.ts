@@ -50,7 +50,7 @@ export const create = mutation({
       type,
       order,
       status: 'pending',
-      matchDuration: matchDuration ?? null,
+      matchDuration: matchDuration ?? 45,
     });
 
     return phaseId;

@@ -156,10 +156,12 @@ export const updateResult = mutation({
     player2Score: v.number(),
     player1Sets: v.optional(v.number()),
     player2Sets: v.optional(v.number()),
+    setsDetails: v.optional(v.array(v.object({ p1: v.number(), p2: v.number() }))),
   },
   handler: async (
     ctx,
-    { id, adminToken, player1Score, player2Score, player1Sets, player2Sets },
+    { id, adminToken, player1Score, player2Score, player1Sets, player2Sets,
+      setsDetails },
   ) => {
     const match = await ctx.db.get(id);
     if (!match) {
@@ -189,6 +191,7 @@ export const updateResult = mutation({
     };
     if (player1Sets !== undefined) patch.player1Sets = player1Sets;
     if (player2Sets !== undefined) patch.player2Sets = player2Sets;
+    if (setsDetails !== undefined) patch.setsDetails = setsDetails;
 
     await ctx.db.patch(id, patch);
 

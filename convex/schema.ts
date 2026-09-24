@@ -112,6 +112,7 @@ export default defineSchema({
     player2Score: v.optional(v.number()),
     player1Sets: v.optional(v.number()),
     player2Sets: v.optional(v.number()),
+      setsDetails: v.optional(v.array(v.object({ p1: v.number(), p2: v.number() }))),
     winnerId: v.optional(v.union(v.id("players"), v.null())), // null = draw
     round: v.number(), // round number (1-based)
     matchNumber: v.number(), // unique within phase

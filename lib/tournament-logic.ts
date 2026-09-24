@@ -16,6 +16,7 @@ export function generateRoundRobin(
   tournamentId: string,
   playerIds: (string | null)[],
   startMatchNumber: number = 1,
+  legs: number = 1
 ): Omit<Match, "_id">[] {
   const ids = [...playerIds];
 
@@ -25,39 +26,49 @@ export function generateRoundRobin(
   }
 
   const n = ids.length;
-  const rounds = n - 1;
+  const roundsPerLeg = n - 1;
   const matchesPerRound = n / 2;
   const matches: Omit<Match, "_id">[] = [];
   let matchNumber = startMatchNumber;
 
   // Create rotation array (fix first element, rotate rest)
-  const rotation = [...ids];
+  let rotation = [...ids];
 
-  for (let round = 0; round < rounds; round++) {
-    for (let match = 0; match < matchesPerRound; match++) {
-      const p1 = rotation[match];
-      const p2 = rotation[n - 1 - match];
+  for (let leg = 0; leg < legs; leg++) {
+    rotation = [...ids]; // Reset rotation for each leg
+    for (let round = 0; round < roundsPerLeg; round++) {
+      for (let match = 0; match < matchesPerRound; match++) {
+        let p1 = rotation[match];
+        let p2 = rotation[n - 1 - match];
 
-      // Skip BYE vs BYE
-      if (p1 === null && p2 === null) continue;
+        // Swap home/away for even legs
+        if (leg % 2 !== 0) {
+          const temp = p1;
+          p1 = p2;
+          p2 = temp;
+        }
 
-      matches.push({
-        tournamentId,
-        phaseId,
-        groupId,
-        player1Id: p1,
-        player2Id: p2,
-        round: round + 1,
-        matchNumber,
-        matchLabel: `M${matchNumber}`,
-        status: "pending",
-      });
-      matchNumber++;
+        // Skip BYE vs BYE
+        if (p1 === null && p2 === null) continue;
+
+        matches.push({
+          tournamentId,
+          phaseId,
+          groupId,
+          player1Id: p1,
+          player2Id: p2,
+          round: (leg * roundsPerLeg) + round + 1,
+          matchNumber,
+          matchLabel: `M${matchNumber}`,
+          status: "pending",
+        });
+        matchNumber++;
+      }
+
+      // Rotate: keep rotation[0] fixed, rotate rest
+      const last = rotation.pop()!;
+      rotation.splice(1, 0, last);
     }
-
-    // Rotate: keep rotation[0] fixed, rotate rest
-    const last = rotation.pop()!;
-    rotation.splice(1, 0, last);
   }
 
   return matches;

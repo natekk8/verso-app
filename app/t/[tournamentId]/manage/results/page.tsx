@@ -148,3 +148,5 @@ export default function ResultsPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

@@ -191,3 +191,5 @@ export default function StructurePage({
     </div>
   );
 }
+
+export const runtime = 'edge';

@@ -131,3 +131,5 @@ export default function PlayerDashboardPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

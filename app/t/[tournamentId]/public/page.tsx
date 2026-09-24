@@ -141,3 +141,5 @@ export default function PublicTournamentPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

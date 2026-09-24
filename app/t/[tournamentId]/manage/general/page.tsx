@@ -274,3 +274,5 @@ export default function GeneralSettingsPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

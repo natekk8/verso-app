@@ -211,3 +211,5 @@ export default function PhaseConfigPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

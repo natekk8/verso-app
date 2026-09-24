@@ -23,3 +23,5 @@ export default function SchedulePlaceholderPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

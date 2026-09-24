@@ -25,3 +25,5 @@ export default function PresentationPlaceholderPage({
     </div>
   );
 }
+
+export const runtime = 'edge';

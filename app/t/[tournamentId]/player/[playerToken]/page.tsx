@@ -81,9 +81,9 @@ export default function PlayerDashboardPage({
         </h2>
         
         <div className="space-y-4">
-          {matches.length === 0 && <p className="text-muted-foreground text-sm">Nie zostałeś jeszcze przydzielony do żadnego meczu.</p>}
+          {(matches || []).length === 0 && <p className="text-muted-foreground text-sm">Nie zostałeś jeszcze przydzielony do żadnego meczu.</p>}
           
-          {matches.map(m => {
+          {(matches || []).map(m => {
             const isPlayer1 = m.player1Id === player._id;
             const opponentId = isPlayer1 ? m.player2Id : m.player1Id;
             const opponentName = players.find(p => p._id === opponentId)?.name || "?";

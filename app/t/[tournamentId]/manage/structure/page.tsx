@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -60,7 +61,7 @@ export default function StructurePage({
   const handleRemove = async (id: string) => {
     if (!confirm("Na pewno usunąć tę fazę i WSZYSTKIE jej mecze/grupy?")) return;
     try {
-      await removePhase({ id: id as Id<"phases">, adminToken });
+      await removePhase({ phaseId: id as Id<"phases">, tournamentId: tournamentId as Id<"tournaments">, adminToken });
       toast.success("Faza usunięta");
     } catch (err) {
       toast.error("Błąd usuwania");

@@ -168,7 +168,7 @@ export default function DashboardPage() {
           {/* Tournaments Grid */}
           {tournaments !== undefined && tournaments.length > 0 && (
             <div className="grid sm:grid-cols-2 gap-4">
-              {tournaments.map((t, index) => (
+              {tournaments.filter(t => t !== null).map((t, index) => (
                 <motion.div
                   key={t._id}
                   initial={{ opacity: 0, y: 10 }}

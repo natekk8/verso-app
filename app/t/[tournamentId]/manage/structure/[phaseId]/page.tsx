@@ -172,7 +172,7 @@ export default function PhaseConfigPage({
                       <div key={pid} className="flex items-center gap-2 bg-zinc-800 px-3 py-1.5 rounded-full text-xs font-medium border border-zinc-700">
                         <img src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(p.name)}&backgroundColor=2563eb,3b82f6&textColor=ffffff&fontWeight=700&radius=20`} className="w-4 h-4 rounded-full" />
                         {p.name}
-                        <button onClick={() => removePlayerFromGroup({ groupId: g._id, tournamentId: tournamentId as Id<"tournaments">, playerId: pid, adminToken })} className="text-zinc-500 hover:text-rose-400 ml-1">×</button>
+                        <button onClick={() => removePlayerFromGroup({ groupId: g._id, tournamentId: tournamentId as Id<"tournaments">, playerId: pid as Id<"players">, adminToken })} className="text-zinc-500 hover:text-rose-400 ml-1">×</button>
                       </div>
                     );
                   })}

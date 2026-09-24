@@ -77,7 +77,7 @@ export default function PlayersPage({
     if (!confirm("Na pewno usunąć tego uczestnika?")) return;
     try {
       await removePlayer({
-        id: id as Id<"players">,
+        playerId: id as Id<"players">,
         adminToken
       });
       toast.success("Uczestnik usunięty");

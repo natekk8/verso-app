@@ -54,7 +54,7 @@ export default function GeneralSettingsPage({
       await updateSettings({ 
         id: tournamentId as Id<"tournaments">, 
         adminToken, 
-        sport: sport || undefined,
+        
         isOnline 
       });
       toast.success("Ustawienia podstawowe zapisane");

@@ -20,6 +20,19 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Verso — Zarządzanie turniejami",
   description: "Nowoczesna platforma do tworzenia i zarządzania turniejami sportowymi",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Verso",
+  },
+};
+
+export const viewport = {
+  themeColor: "#09090b",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false, // Prevents zooming on inputs in mobile PWA
 };
 
 export default function RootLayout({

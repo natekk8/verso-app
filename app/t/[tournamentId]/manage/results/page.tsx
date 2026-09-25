@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { triggerHaptic } from "@/lib/haptics";
 
 export default function ResultsPage({
   params,
@@ -224,6 +225,7 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
 
   const handleStartLive = async () => {
     if (!adminToken) return;
+    triggerHaptic("heavy");
     if (localSets.length === 0) {
       setLocalSets([{ p1: 0, p2: 0 }]); // Add first set automatically
       await updateLiveScore({ id: match._id, adminToken, currentSetIndex: 0, setPlayer1Score: 0, setPlayer2Score: 0 });
@@ -233,11 +235,20 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
 
   const handleEndMatch = async () => {
     if (!adminToken) return;
+    triggerHaptic("success");
     await endMatch({ id: match._id, adminToken });
   };
 
   const updateSetPoint = async (setIndex: number, player: 1 | 2, delta: number) => {
     if (!adminToken) return;
+    
+    // Haptics
+    if (delta > 0) {
+      triggerHaptic("medium");
+    } else {
+      triggerHaptic("light");
+    }
+
     const newSets = [...localSets];
     if (!newSets[setIndex]) newSets[setIndex] = { p1: 0, p2: 0 };
     

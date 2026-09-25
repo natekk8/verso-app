@@ -187,12 +187,12 @@ export default function PublicTournamentPage({
       {/* Subtle Background Glow */}
       <div className="fixed top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-blue-900/10 to-transparent pointer-events-none -z-10" />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 lg:py-20">
         <motion.div 
           variants={containerVariants}
           initial="hidden"
           animate="show"
-          className="mb-16 md:mb-24"
+          className="mb-12 md:mb-16 lg:mb-24"
         >
           <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3 mb-6">
             <div className={`px-3 py-1.5 text-xs font-semibold uppercase tracking-widest rounded-full border flex items-center gap-1.5 ${statusInfo.color}`}>
@@ -207,36 +207,36 @@ export default function PublicTournamentPage({
             )}
           </motion.div>
           
-          <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl font-black tracking-tighter mb-6 leading-[1.1] text-transparent bg-clip-text bg-gradient-to-br from-white to-zinc-500">
+          <motion.h1 variants={itemVariants} className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tighter mb-4 md:mb-6 leading-[1.1] text-transparent bg-clip-text bg-gradient-to-br from-white to-zinc-500">
             {t.name}
           </motion.h1>
           
           {t.description && (
-            <motion.p variants={itemVariants} className="text-lg md:text-xl text-zinc-400 max-w-3xl mb-10 leading-relaxed font-light">
+            <motion.p variants={itemVariants} className="text-base md:text-lg lg:text-xl text-zinc-400 max-w-3xl mb-8 md:mb-10 leading-relaxed font-light">
               {t.description}
             </motion.p>
           )}
           
-          <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-6 text-sm font-medium text-zinc-300 bg-zinc-900/40 backdrop-blur-md border border-zinc-800/80 p-4 rounded-2xl w-fit shadow-lg shadow-black/20">
-            <div className="flex items-center gap-2.5">
+          <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-4 md:gap-6 text-sm font-medium text-zinc-300 bg-zinc-900/40 backdrop-blur-md border border-zinc-800/80 p-3 md:p-4 rounded-2xl w-fit shadow-lg shadow-black/20">
+            <div className="flex items-center gap-2 md:gap-2.5">
               <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
                 <Users weight="duotone" className="w-4 h-4 text-blue-400" />
               </div>
-              <span className="text-base">{players.length} <span className="text-zinc-500">uczestników</span></span>
+              <span className="text-sm md:text-base">{players.length} <span className="text-zinc-500">uczestników</span></span>
             </div>
             <div className="w-px h-8 bg-zinc-800" />
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 md:gap-2.5">
               <div className="w-8 h-8 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
                 <Trophy weight="duotone" className="w-4 h-4 text-amber-400" />
               </div>
-              <span className="text-base">{phases.length} <span className="text-zinc-500">etapów</span></span>
+              <span className="text-sm md:text-base">{phases.length} <span className="text-zinc-500">etapów</span></span>
             </div>
           </motion.div>
         </motion.div>
 
         <div className="grid xl:grid-cols-3 gap-10 xl:gap-12">
           {/* Main content - Standings */}
-          <div className="xl:col-span-2 space-y-16">
+          <div className="xl:col-span-2 space-y-12 md:space-y-16">
             {phases.map((phase, pIndex) => {
               const phaseMatches = matches.filter(m => m.phaseId === phase._id);
               const standings = calculateStandings(
@@ -255,18 +255,18 @@ export default function PublicTournamentPage({
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, margin: "-100px" }}
                   transition={{ delay: pIndex * 0.1, duration: 0.5, type: "spring", stiffness: 200, damping: 20 }}
-                  className="space-y-6"
+                  className="space-y-4 md:space-y-6"
                 >
-                  <div className="flex items-center gap-3 pb-4 border-b border-zinc-800/80">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800 shadow-inner">
-                      <ListNumbers weight="duotone" className="w-5 h-5 text-blue-500" />
+                  <div className="flex items-center gap-3 pb-3 md:pb-4 border-b border-zinc-800/80">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-zinc-900 flex items-center justify-center border border-zinc-800 shadow-inner">
+                      <ListNumbers weight="duotone" className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
                     </div>
-                    <h2 className="text-2xl font-bold tracking-tight text-zinc-100">
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-100">
                       {phase.name}
                     </h2>
                   </div>
                   
-                  <div className={`bg-zinc-900/10 border border-zinc-800/40 rounded-2xl overflow-hidden ${phase.type === 'bracket' ? 'p-8 min-h-[500px] flex items-center justify-center relative overflow-auto' : ''}`}>
+                  <div className={`bg-zinc-900/10 border border-zinc-800/40 rounded-2xl overflow-hidden ${phase.type === 'bracket' ? 'p-4 md:p-8 min-h-[400px] md:min-h-[500px] flex items-center justify-center relative overflow-auto hide-scrollbar' : ''}`}>
                     {phase.type === 'bracket' ? (
                       <div 
                         style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s ease-out' }}
@@ -280,37 +280,37 @@ export default function PublicTournamentPage({
                         )}
                       </div>
                     ) : (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto hide-scrollbar">
                         <table className="w-full text-sm text-left">
-                        <thead className="text-[11px] font-bold uppercase tracking-wider bg-zinc-900/20 text-zinc-500 border-b border-zinc-800/40">
+                        <thead className="text-[10px] md:text-[11px] font-bold uppercase tracking-wider bg-zinc-900/20 text-zinc-500 border-b border-zinc-800/40">
                           <tr>
-                            <th className="px-5 py-4 w-12 text-center">#</th>
-                            <th className="px-5 py-4">Uczestnik</th>
-                            <th className="px-4 py-4 text-center" title="Rozegrane Mecze">M</th>
-                            <th className="px-4 py-4 text-center text-emerald-500/70" title="Wygrane">W</th>
-                            <th className="px-4 py-4 text-center text-amber-500/70" title="Remisy">R</th>
-                            <th className="px-4 py-4 text-center text-rose-500/70" title="Przegrane">P</th>
-                            <th className="px-4 py-4 text-center" title="Bramki/Punkty zdobyte : stracone">+/-</th>
-                            <th className="px-5 py-4 text-center text-blue-400" title="Punkty w tabeli">PKT</th>
+                            <th className="px-3 py-3 md:px-5 md:py-4 w-10 md:w-12 text-center">#</th>
+                            <th className="px-3 py-3 md:px-5 md:py-4">Uczestnik</th>
+                            <th className="px-2 py-3 md:px-4 md:py-4 text-center hidden md:table-cell" title="Rozegrane Mecze">M</th>
+                            <th className="px-2 py-3 md:px-4 md:py-4 text-center text-emerald-500/70 hidden sm:table-cell" title="Wygrane">W</th>
+                            <th className="px-2 py-3 md:px-4 md:py-4 text-center text-amber-500/70 hidden sm:table-cell" title="Remisy">R</th>
+                            <th className="px-2 py-3 md:px-4 md:py-4 text-center text-rose-500/70 hidden sm:table-cell" title="Przegrane">P</th>
+                            <th className="px-2 py-3 md:px-4 md:py-4 text-center hidden sm:table-cell" title="Bramki/Punkty zdobyte : stracone">+/-</th>
+                            <th className="px-3 py-3 md:px-5 md:py-4 text-center text-blue-400" title="Punkty w tabeli">PKT</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800/50">
                           {standings.map((row, i) => (
                             <tr key={row.playerId} className="hover:bg-zinc-800/40 transition-colors group">
-                              <td className="px-5 py-4 text-center font-mono text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                              <td className="px-3 py-3 md:px-5 md:py-4 text-center font-mono text-zinc-500 group-hover:text-zinc-300 transition-colors">
                                 {i + 1}
                               </td>
-                              <td className="px-5 py-4 font-medium text-zinc-200">
-                                <span className="truncate block font-semibold">{row.playerName}</span>
+                              <td className="px-3 py-3 md:px-5 md:py-4 font-medium text-zinc-200">
+                                <span className="truncate block font-semibold text-sm md:text-base">{row.playerName}</span>
                               </td>
-                              <td className="px-4 py-4 text-center text-zinc-400 font-mono">{row.played}</td>
-                              <td className="px-4 py-4 text-center text-emerald-400/90 font-mono">{row.won}</td>
-                              <td className="px-4 py-4 text-center text-amber-400/90 font-mono">{row.drawn}</td>
-                              <td className="px-4 py-4 text-center text-rose-400/90 font-mono">{row.lost}</td>
-                              <td className="px-4 py-4 text-center text-zinc-500 font-mono text-xs tracking-wider">
+                              <td className="px-2 py-3 md:px-4 md:py-4 text-center text-zinc-400 font-mono hidden md:table-cell">{row.played}</td>
+                              <td className="px-2 py-3 md:px-4 md:py-4 text-center text-emerald-400/90 font-mono hidden sm:table-cell">{row.won}</td>
+                              <td className="px-2 py-3 md:px-4 md:py-4 text-center text-amber-400/90 font-mono hidden sm:table-cell">{row.drawn}</td>
+                              <td className="px-2 py-3 md:px-4 md:py-4 text-center text-rose-400/90 font-mono hidden sm:table-cell">{row.lost}</td>
+                              <td className="px-2 py-3 md:px-4 md:py-4 text-center text-zinc-500 font-mono text-xs tracking-wider hidden sm:table-cell">
                                 {row.goalsFor}<span className="text-zinc-700 mx-1">:</span>{row.goalsAgainst}
                               </td>
-                              <td className="px-5 py-4 text-center font-black text-blue-400 text-base bg-blue-500/5 border-l border-zinc-800/50">
+                              <td className="px-3 py-3 md:px-5 md:py-4 text-center font-black text-blue-400 text-sm md:text-base bg-blue-500/5 border-l border-zinc-800/50">
                                 {row.points}
                               </td>
                             </tr>

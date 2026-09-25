@@ -177,11 +177,24 @@ export const updateResult = mutation({
       throw new Error('Brak uprawnień.');
     }
 
+    let p1Wins = 0;
+    let p2Wins = 0;
+
+    if (setsDetails && setsDetails.length > 0) {
+      setsDetails.forEach(set => {
+        if (set.p1 > set.p2) p1Wins++;
+        else if (set.p2 > set.p1) p2Wins++;
+      });
+    } else {
+      p1Wins = player1Score ?? 0;
+      p2Wins = player2Score ?? 0;
+    }
+
     // Determine winner (null = draw)
     const winnerId =
-      player1Score > player2Score
+      p1Wins > p2Wins
         ? (match.player1Id ?? null)
-        : player2Score > player1Score
+        : p2Wins > p1Wins
           ? (match.player2Id ?? null)
           : null;
 
@@ -463,13 +476,23 @@ export const endMatch = mutation({
       throw new Error('Brak uprawnień.');
     }
 
-    const player1Score = match.player1Score ?? 0;
-    const player2Score = match.player2Score ?? 0;
+    let p1Wins = 0;
+    let p2Wins = 0;
+
+    if (match.setsDetails && match.setsDetails.length > 0) {
+      match.setsDetails.forEach(set => {
+        if (set.p1 > set.p2) p1Wins++;
+        else if (set.p2 > set.p1) p2Wins++;
+      });
+    } else {
+      p1Wins = match.player1Score ?? 0;
+      p2Wins = match.player2Score ?? 0;
+    }
 
     const winnerId =
-      player1Score > player2Score
+      p1Wins > p2Wins
         ? (match.player1Id ?? null)
-        : player2Score > player1Score
+        : p2Wins > p1Wins
           ? (match.player2Id ?? null)
           : null;
 

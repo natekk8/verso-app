@@ -187,38 +187,40 @@ export default function ResultsPage({
         </div>
       )}
 
-      <AnimatePresence>
-        {selectedMatch && (
-          <LiveMatchModal
-            match={selectedMatch}
-            players={players}
-            adminToken={adminToken}
-            onClose={() => setSelectedMatch(null)}
-          />
-        )}
-      </AnimatePresence>
+      <LiveMatchModal
+        isOpen={!!selectedMatch}
+        match={selectedMatch}
+        players={players}
+        adminToken={adminToken}
+        onClose={() => setSelectedMatch(null)}
+      />
     </div>
   );
 }
 
-function LiveMatchModal({ match, players, adminToken, onClose }: any) {
-  const p1 = players.find((p: any) => p._id === match.player1Id);
-  const p2 = players.find((p: any) => p._id === match.player2Id);
+function LiveMatchModal({ isOpen, match, players, adminToken, onClose }: any) {
+  // We must handle match == null gracefully so Dialog can exit animation doesn't crash
+  const safeMatch = match || { _id: "", player1Id: "", player2Id: "", status: "pending", player1Score: 0, player2Score: 0, setsDetails: [] };
+  
+  const p1 = players?.find((p: any) => p._id === safeMatch.player1Id);
+  const p2 = players?.find((p: any) => p._id === safeMatch.player2Id);
 
   const startMatch = useMutation(api.matches.startMatch);
   const endMatch = useMutation(api.matches.endMatch);
   const updateLiveScore = useMutation(api.matches.updateLiveScore);
   const clearResult = useMutation(api.matches.clearResult);
 
-  const isLive = match.status === "in_progress";
-  const isFinished = match.status === "finished";
+  const isLive = safeMatch.status === "in_progress";
+  const isFinished = safeMatch.status === "finished";
 
   // Use local state for immediate feedback, but sync with match prop
-  const [localSets, setLocalSets] = useState<{p1: number, p2: number}[]>(match.setsDetails || []);
+  const [localSets, setLocalSets] = useState<{p1: number, p2: number}[]>(safeMatch.setsDetails || []);
   
   useEffect(() => {
-    setLocalSets(match.setsDetails || []);
-  }, [match.setsDetails]);
+    if (match) {
+      setLocalSets(match.setsDetails || []);
+    }
+  }, [match]);
 
   const p1SetsWon = localSets.filter(s => s.p1 > s.p2).length;
   const p2SetsWon = localSets.filter(s => s.p2 > s.p1).length;
@@ -228,15 +230,15 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
     triggerHaptic("heavy");
     if (localSets.length === 0) {
       setLocalSets([{ p1: 0, p2: 0 }]); // Add first set automatically
-      await updateLiveScore({ id: match._id, adminToken, currentSetIndex: 0, setPlayer1Score: 0, setPlayer2Score: 0 });
+      await updateLiveScore({ id: safeMatch._id, adminToken, currentSetIndex: 0, setPlayer1Score: 0, setPlayer2Score: 0 });
     }
-    await startMatch({ id: match._id, adminToken });
+    await startMatch({ id: safeMatch._id, adminToken });
   };
 
   const handleEndMatch = async () => {
     if (!adminToken) return;
     triggerHaptic("success");
-    await endMatch({ id: match._id, adminToken });
+    await endMatch({ id: safeMatch._id, adminToken });
   };
 
   const updateSetPoint = async (setIndex: number, player: 1 | 2, delta: number) => {
@@ -257,7 +259,7 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
     
     setLocalSets(newSets);
     await updateLiveScore({ 
-      id: match._id, 
+      id: safeMatch._id, 
       adminToken, 
       currentSetIndex: setIndex, 
       setPlayer1Score: newSets[setIndex].p1, 
@@ -270,72 +272,72 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
     const newIndex = localSets.length;
     const newSets = [...localSets, { p1: 0, p2: 0 }];
     setLocalSets(newSets);
-    await updateLiveScore({ id: match._id, adminToken, currentSetIndex: newIndex, setPlayer1Score: 0, setPlayer2Score: 0 });
+    await updateLiveScore({ id: safeMatch._id, adminToken, currentSetIndex: newIndex, setPlayer1Score: 0, setPlayer2Score: 0 });
   };
 
   return (
-    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 p-0 overflow-hidden shadow-2xl">
         <div className={cn(
-          "px-6 py-4 flex items-center justify-between border-b transition-colors",
+          "px-4 md:px-6 py-4 flex items-center justify-between border-b transition-colors",
           isLive ? "bg-blue-600 border-blue-500" : "bg-zinc-900 border-zinc-800"
         )}>
           <div className="flex items-center gap-3">
             {isLive ? (
-              <span className="flex items-center gap-2 text-white font-bold tracking-wide">
-                <span className="relative flex h-3 w-3">
+              <span className="flex items-center gap-2 text-white font-bold tracking-wide text-sm md:text-base">
+                <span className="relative flex h-2.5 w-2.5 md:h-3 md:w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 md:h-3 md:w-3 bg-white"></span>
                 </span>
                 LIVE
               </span>
             ) : (
-              <h2 className="font-semibold text-lg text-zinc-100">Zarządzanie meczem</h2>
+              <h2 className="font-semibold text-base md:text-lg text-zinc-100">Zarządzanie meczem</h2>
             )}
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} className={cn(
             "p-0 h-auto hover:bg-transparent",
             isLive ? "text-blue-200 hover:text-white" : "text-zinc-400 hover:text-white"
           )}>
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 md:w-6 md:h-6" />
           </Button>
         </div>
 
-        <div className="p-8">
+        <div className="p-4 md:p-8 max-h-[85vh] overflow-y-auto hide-scrollbar">
           {/* Main Score Board */}
-          <div className="flex justify-between items-stretch gap-6 mb-10">
-            <div className="flex-1 flex flex-col items-center gap-4 overflow-hidden">
-              <span className="text-2xl font-bold text-zinc-100 truncate w-full text-center">{p1?.name}</span>
+          <div className="flex flex-row justify-between items-center md:items-stretch gap-2 md:gap-6 mb-8 md:mb-10">
+            <div className="flex-1 flex flex-col items-center gap-2 md:gap-4 overflow-hidden w-full">
+              <span className="text-lg md:text-2xl font-bold text-zinc-100 truncate w-full text-center">{p1?.name || "Brak"}</span>
               <div className={cn(
-                "w-32 h-32 flex items-center justify-center rounded-3xl text-6xl font-mono font-bold border transition-colors",
+                "w-20 h-20 md:w-32 md:h-32 flex items-center justify-center rounded-2xl md:rounded-3xl text-4xl md:text-6xl font-mono font-bold border transition-colors",
                 isLive ? "bg-zinc-900 border-zinc-800 text-white" : "bg-zinc-950 border-zinc-800 text-zinc-500"
               )}>
-                {isLive || isFinished ? p1SetsWon : (match.player1Score ?? 0)}
+                {isLive || isFinished ? p1SetsWon : (safeMatch.player1Score ?? 0)}
               </div>
             </div>
             
-            <div className="flex flex-col items-center justify-center gap-2 text-zinc-600 uppercase font-bold tracking-widest pt-10">
+            <div className="flex flex-col items-center justify-center gap-1 md:gap-2 text-zinc-600 uppercase font-bold tracking-widest text-xs md:text-base md:pt-10">
               VS
             </div>
 
-            <div className="flex-1 flex flex-col items-center gap-4 overflow-hidden">
-              <span className="text-2xl font-bold text-zinc-100 truncate w-full text-center">{p2?.name}</span>
+            <div className="flex-1 flex flex-col items-center gap-2 md:gap-4 overflow-hidden w-full">
+              <span className="text-lg md:text-2xl font-bold text-zinc-100 truncate w-full text-center">{p2?.name || "Brak"}</span>
               <div className={cn(
-                "w-32 h-32 flex items-center justify-center rounded-3xl text-6xl font-mono font-bold border transition-colors",
+                "w-20 h-20 md:w-32 md:h-32 flex items-center justify-center rounded-2xl md:rounded-3xl text-4xl md:text-6xl font-mono font-bold border transition-colors",
                 isLive ? "bg-zinc-900 border-zinc-800 text-white" : "bg-zinc-950 border-zinc-800 text-zinc-500"
               )}>
-                {isLive || isFinished ? p2SetsWon : (match.player2Score ?? 0)}
+                {isLive || isFinished ? p2SetsWon : (safeMatch.player2Score ?? 0)}
               </div>
             </div>
           </div>
 
           {/* Sets Editor */}
-          <div className="space-y-6">
+          <div className="space-y-4 md:space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Sety</h3>
+              <h3 className="text-xs md:text-sm font-semibold tracking-widest text-zinc-500 uppercase">Sety</h3>
               {adminToken && (isLive || isFinished) && (
-                <Button variant="ghost" size="sm" onClick={addSet} className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10">
-                  <Plus className="w-4 h-4 mr-2" /> Nowy set
+                <Button variant="ghost" size="sm" onClick={addSet} className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 h-8 md:h-9 text-xs md:text-sm">
+                  <Plus className="w-3 h-3 md:w-4 md:h-4 mr-1.5 md:mr-2" /> Nowy set
                 </Button>
               )}
             </div>
@@ -345,39 +347,39 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
                 Brak zapisanych setów. Rozpocznij mecz lub dodaj set ręcznie.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {localSets.map((set, i) => (
-                  <div key={i} className="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-3 rounded-2xl transition-all">
+                  <div key={i} className="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-2 md:p-3 rounded-xl md:rounded-2xl transition-all">
                     {/* P1 Controls */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 md:gap-3">
                       {adminToken && (isLive || isFinished) && (
                         <>
-                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 1, -1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
-                            <Minus className="w-4 h-4" />
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 1, -1)} className="w-8 h-8 md:w-10 md:h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95 shrink-0">
+                            <Minus className="w-3 h-3 md:w-4 md:h-4" />
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 1, 1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
-                            <Plus className="w-4 h-4" />
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 1, 1)} className="w-8 h-8 md:w-10 md:h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95 shrink-0">
+                            <Plus className="w-3 h-3 md:w-4 md:h-4" />
                           </Button>
                         </>
                       )}
                     </div>
                     
                     {/* Set Score */}
-                    <div className="flex items-center gap-4 min-w-[120px] justify-center">
-                      <span className={cn("text-3xl font-mono font-bold transition-colors", set.p1 > set.p2 ? "text-white" : "text-zinc-400")}>{set.p1}</span>
-                      <span className="text-zinc-600 text-sm font-medium">S{i+1}</span>
-                      <span className={cn("text-3xl font-mono font-bold transition-colors", set.p2 > set.p1 ? "text-white" : "text-zinc-400")}>{set.p2}</span>
+                    <div className="flex items-center gap-3 md:gap-4 min-w-[90px] md:min-w-[120px] justify-center">
+                      <span className={cn("text-2xl md:text-3xl font-mono font-bold transition-colors", set.p1 > set.p2 ? "text-white" : "text-zinc-400")}>{set.p1}</span>
+                      <span className="text-zinc-600 text-xs md:text-sm font-medium">S{i+1}</span>
+                      <span className={cn("text-2xl md:text-3xl font-mono font-bold transition-colors", set.p2 > set.p1 ? "text-white" : "text-zinc-400")}>{set.p2}</span>
                     </div>
 
                     {/* P2 Controls */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1 md:gap-3">
                       {adminToken && (isLive || isFinished) && (
                         <>
-                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 2, 1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
-                            <Plus className="w-4 h-4" />
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 2, 1)} className="w-8 h-8 md:w-10 md:h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95 shrink-0">
+                            <Plus className="w-3 h-3 md:w-4 md:h-4" />
                           </Button>
-                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 2, -1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
-                            <Minus className="w-4 h-4" />
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 2, -1)} className="w-8 h-8 md:w-10 md:h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95 shrink-0">
+                            <Minus className="w-3 h-3 md:w-4 md:h-4" />
                           </Button>
                         </>
                       )}
@@ -390,20 +392,20 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
 
           {/* Action Bar */}
           {adminToken && (
-            <div className="mt-10 flex gap-4 pt-6 border-t border-zinc-800">
+            <div className="mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-6 border-t border-zinc-800">
               {!isLive && !isFinished && (
-                <Button className="flex-1 bg-blue-600 hover:bg-blue-500 text-white h-12 text-base font-semibold transition-transform active:scale-95" onClick={handleStartLive}>
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-500 text-white h-12 text-sm md:text-base font-semibold transition-transform active:scale-95" onClick={handleStartLive}>
                   <PlayCircle className="w-5 h-5 mr-2" weight="fill" /> Rozpocznij Live
                 </Button>
               )}
               {isLive && (
-                <Button className="flex-1 bg-zinc-100 hover:bg-white text-zinc-950 h-12 text-base font-semibold transition-transform active:scale-95" onClick={handleEndMatch}>
+                <Button className="flex-1 bg-zinc-100 hover:bg-white text-zinc-950 h-12 text-sm md:text-base font-semibold transition-transform active:scale-95" onClick={handleEndMatch}>
                   <StopCircle className="w-5 h-5 mr-2" weight="fill" /> Zakończ Mecz
                 </Button>
               )}
               {isFinished && (
-                <Button variant="outline" className="flex-1 border-rose-500/20 text-rose-500 hover:bg-rose-500/10 h-12 text-base font-semibold transition-transform active:scale-95" onClick={() => clearResult({ id: match._id, adminToken })}>
-                  Cofnij Zakończenie (Wyczyść)
+                <Button variant="outline" className="flex-1 border-rose-500/20 text-rose-500 hover:bg-rose-500/10 h-12 text-sm md:text-base font-semibold transition-transform active:scale-95" onClick={() => clearResult({ id: safeMatch._id, adminToken })}>
+                  Cofnij Zakończenie
                 </Button>
               )}
             </div>

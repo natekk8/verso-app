@@ -293,6 +293,9 @@ export const remove = mutation({
 
     const registrations = await ctx.db.query("registrations").withIndex("by_tournament", q => q.eq("tournamentId", id)).collect();
     for (const r of registrations) await ctx.db.delete(r._id);
+    
+    const teams = await ctx.db.query("teams").withIndex("by_tournament", q => q.eq("tournamentId", id)).collect();
+    for (const tm of teams) await ctx.db.delete(tm._id);
 
     await ctx.db.delete(id);
   },

@@ -53,15 +53,38 @@ export default defineSchema({
 
     publicPageEnabled: v.boolean(),
     registrationEnabled: v.boolean(),
+    registrationConfig: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+          type: v.string(),
+          required: v.boolean(),
+        })
+      )
+    ),
     description: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
     updatedAt: v.number(),
   })
     .index("by_status", ["status"])
     .index("by_slug", ["slug"]),
 
+  // ─── Teams ────────────────────────────────────────────────────
+  teams: defineTable({
+    tournamentId: v.id("tournaments"),
+    name: v.string(),
+    logoUrl: v.optional(v.string()),
+    playerIds: v.array(v.id("players")),
+    color: v.optional(v.string()),
+    order: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_tournament", ["tournamentId"]),
+
   // ─── Players ──────────────────────────────────────────────────
   players: defineTable({
     tournamentId: v.id("tournaments"),
+    teamId: v.optional(v.id("teams")),
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -145,6 +168,7 @@ export default defineSchema({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     message: v.optional(v.string()),
+    customFields: v.optional(v.record(v.string(), v.string())),
     status: v.union(
       v.literal("pending"),
       v.literal("approved"),

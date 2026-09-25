@@ -12,6 +12,7 @@ import type * as groups from "../groups.js";
 import type * as matches from "../matches.js";
 import type * as phases from "../phases.js";
 import type * as players from "../players.js";
+import type * as teams from "../teams.js";
 import type * as tournaments from "../tournaments.js";
 
 import type {
@@ -25,6 +26,7 @@ declare const fullApi: ApiFromModules<{
   matches: typeof matches;
   phases: typeof phases;
   players: typeof players;
+  teams: typeof teams;
   tournaments: typeof tournaments;
 }>;
 

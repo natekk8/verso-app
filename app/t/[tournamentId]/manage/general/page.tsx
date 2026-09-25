@@ -595,6 +595,42 @@ export default function GeneralSettingsPage({
                 </div>
               </SettingRow>
             </section>
+            
+            {/* ─── Card 4: Role i Uprawnienia ────────────────────────────── */}
+            <section className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <div className="px-6 pt-5 pb-4 border-b border-zinc-800">
+                <div className="flex gap-3 items-start">
+                  <UserCirclePlus className="w-4 h-4 text-zinc-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-zinc-100">Role i uprawnienia (Sędziowie)</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">
+                      Podaj sędziom kod, który pozwoli im aktualizować wyniki meczów, ale nie pozwoli na edycję turnieju.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-center">
+                    <span className="font-mono text-lg font-bold tracking-widest text-zinc-300">
+                      {tournament.refereeToken || "Brak kodu"}
+                    </span>
+                  </div>
+                  <Button 
+                    variant="outline"
+                    className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700"
+                    onClick={async () => {
+                      const token = Math.floor(100000 + Math.random() * 900000).toString();
+                      await updateSettings({ id: tournamentId as Id<"tournaments">, adminToken, refereeToken: token });
+                      toast.success("Nowy kod sędziego wygenerowany");
+                    }}
+                  >
+                    Generuj nowy
+                  </Button>
+                </div>
+              </div>
+            </section>
+
           </div>
           
           {/* ─── DANGER ZONE ──────────────────────────────────────────────── */}

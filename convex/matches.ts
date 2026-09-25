@@ -151,7 +151,8 @@ export const createMany = mutation({
 export const updateResult = mutation({
   args: {
     id: v.id('matches'),
-    adminToken: v.string(),
+    adminToken: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
     player1Score: v.number(),
     player2Score: v.number(),
     player1Sets: v.optional(v.number()),
@@ -160,7 +161,7 @@ export const updateResult = mutation({
   },
   handler: async (
     ctx,
-    { id, adminToken, player1Score, player2Score, player1Sets, player2Sets,
+    { id, adminToken, refereeToken, player1Score, player2Score, player1Sets, player2Sets,
       setsDetails },
   ) => {
     const match = await ctx.db.get(id);
@@ -170,8 +171,10 @@ export const updateResult = mutation({
 
     // Validate admin token against the match's tournament
     const tournament = await ctx.db.get(match.tournamentId);
-    if (!tournament || tournament.adminToken !== adminToken) {
-      throw new Error('Nieprawidłowy token administratora.');
+    const isAdmin = adminToken && tournament?.adminToken === adminToken;
+    const isReferee = refereeToken && tournament?.refereeToken === refereeToken;
+    if (!tournament || (!isAdmin && !isReferee)) {
+      throw new Error('Brak uprawnień.');
     }
 
     // Determine winner (null = draw)
@@ -248,17 +251,20 @@ export const updateSchedule = mutation({
 export const clearResult = mutation({
   args: {
     id: v.id('matches'),
-    adminToken: v.string(),
+    adminToken: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
   },
-  handler: async (ctx, { id, adminToken }) => {
+  handler: async (ctx, { id, adminToken, refereeToken }) => {
     const match = await ctx.db.get(id);
     if (!match) {
       throw new Error('Mecz nie istnieje.');
     }
 
     const tournament = await ctx.db.get(match.tournamentId);
-    if (!tournament || tournament.adminToken !== adminToken) {
-      throw new Error('Nieprawidłowy token administratora.');
+    const isAdmin = adminToken && tournament?.adminToken === adminToken;
+    const isReferee = refereeToken && tournament?.refereeToken === refereeToken;
+    if (!tournament || (!isAdmin && !isReferee)) {
+      throw new Error('Brak uprawnień.');
     }
 
     // Revert next match if applicable
@@ -366,15 +372,18 @@ export const createSingle = mutation({
 export const startMatch = mutation({
   args: {
     id: v.id('matches'),
-    adminToken: v.string(),
+    adminToken: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
   },
-  handler: async (ctx, { id, adminToken }) => {
+  handler: async (ctx, { id, adminToken, refereeToken }) => {
     const match = await ctx.db.get(id);
     if (!match) throw new Error('Mecz nie istnieje.');
 
     const tournament = await ctx.db.get(match.tournamentId);
-    if (!tournament || tournament.adminToken !== adminToken) {
-      throw new Error('Nieprawidłowy token administratora.');
+    const isAdmin = adminToken && tournament?.adminToken === adminToken;
+    const isReferee = refereeToken && tournament?.refereeToken === refereeToken;
+    if (!tournament || (!isAdmin && !isReferee)) {
+      throw new Error('Brak uprawnień.');
     }
 
     await ctx.db.patch(id, { status: 'in_progress' });
@@ -386,7 +395,8 @@ export const startMatch = mutation({
 export const updateLiveScore = mutation({
   args: {
     id: v.id('matches'),
-    adminToken: v.string(),
+    adminToken: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
     player1Score: v.optional(v.number()),
     player2Score: v.optional(v.number()),
     player1Sets: v.optional(v.number()),
@@ -397,7 +407,7 @@ export const updateLiveScore = mutation({
   },
   handler: async (ctx, args) => {
     const {
-      id, adminToken, player1Score, player2Score,
+      id, adminToken, refereeToken, player1Score, player2Score,
       player1Sets, player2Sets, currentSetIndex,
       setPlayer1Score, setPlayer2Score
     } = args;
@@ -406,8 +416,10 @@ export const updateLiveScore = mutation({
     if (!match) throw new Error('Mecz nie istnieje.');
 
     const tournament = await ctx.db.get(match.tournamentId);
-    if (!tournament || tournament.adminToken !== adminToken) {
-      throw new Error('Nieprawidłowy token administratora.');
+    const isAdmin = adminToken && tournament?.adminToken === adminToken;
+    const isReferee = refereeToken && tournament?.refereeToken === refereeToken;
+    if (!tournament || (!isAdmin && !isReferee)) {
+      throw new Error('Brak uprawnień.');
     }
 
     const patch: Record<string, unknown> = {
@@ -437,15 +449,18 @@ export const updateLiveScore = mutation({
 export const endMatch = mutation({
   args: {
     id: v.id('matches'),
-    adminToken: v.string(),
+    adminToken: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
   },
-  handler: async (ctx, { id, adminToken }) => {
+  handler: async (ctx, { id, adminToken, refereeToken }) => {
     const match = await ctx.db.get(id);
     if (!match) throw new Error('Mecz nie istnieje.');
 
     const tournament = await ctx.db.get(match.tournamentId);
-    if (!tournament || tournament.adminToken !== adminToken) {
-      throw new Error('Nieprawidłowy token administratora.');
+    const isAdmin = adminToken && tournament?.adminToken === adminToken;
+    const isReferee = refereeToken && tournament?.refereeToken === refereeToken;
+    if (!tournament || (!isAdmin && !isReferee)) {
+      throw new Error('Brak uprawnień.');
     }
 
     const player1Score = match.player1Score ?? 0;

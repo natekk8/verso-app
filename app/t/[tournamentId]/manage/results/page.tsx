@@ -226,7 +226,7 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
     if (!adminToken) return;
     if (localSets.length === 0) {
       setLocalSets([{ p1: 0, p2: 0 }]); // Add first set automatically
-      await updateLiveScore({ id: match._id, adminToken, setIndex: 0, p1Score: 0, p2Score: 0 });
+      await updateLiveScore({ id: match._id, adminToken, currentSetIndex: 0, setPlayer1Score: 0, setPlayer2Score: 0 });
     }
     await startMatch({ id: match._id, adminToken });
   };
@@ -248,9 +248,9 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
     await updateLiveScore({ 
       id: match._id, 
       adminToken, 
-      setIndex, 
-      p1Score: newSets[setIndex].p1, 
-      p2Score: newSets[setIndex].p2 
+      currentSetIndex: setIndex, 
+      setPlayer1Score: newSets[setIndex].p1, 
+      setPlayer2Score: newSets[setIndex].p2 
     });
   };
 
@@ -259,7 +259,7 @@ function LiveMatchModal({ match, players, adminToken, onClose }: any) {
     const newIndex = localSets.length;
     const newSets = [...localSets, { p1: 0, p2: 0 }];
     setLocalSets(newSets);
-    await updateLiveScore({ id: match._id, adminToken, setIndex: newIndex, p1Score: 0, p2Score: 0 });
+    await updateLiveScore({ id: match._id, adminToken, currentSetIndex: newIndex, setPlayer1Score: 0, setPlayer2Score: 0 });
   };
 
   return (

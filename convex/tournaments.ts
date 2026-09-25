@@ -249,6 +249,17 @@ export const updateSettings = mutation({
     isOnline: v.optional(v.boolean()),
     languages: v.optional(v.array(v.string())),
     description: v.optional(v.string()),
+    refereeToken: v.optional(v.string()),
+    registrationConfig: v.optional(
+      v.array(
+        v.object({
+          id: v.string(),
+          label: v.string(),
+          type: v.string(),
+          required: v.boolean(),
+        })
+      )
+    ),
   },
   handler: async (ctx, { id, adminToken, ...updates }) => {
     const t = await ctx.db.get(id);

@@ -18,7 +18,8 @@ import {
   ArrowLeft,
   ArrowSquareOut,
   CaretLeft,
-  CaretRight
+  CaretRight,
+  Shield
 } from "@phosphor-icons/react";
 
 interface ManageSidebarProps {
@@ -27,6 +28,7 @@ interface ManageSidebarProps {
 
 const NAV_ITEMS = [
   { icon: GearSix,        label: "Ogólne",       segment: "general"      },
+  { icon: Shield,         label: "Zespoły",      segment: "teams"        },
   { icon: Users,          label: "Uczestnicy",   segment: "players"      },
   { icon: ChartBar,       label: "Podział",      segment: "structure"    },
   { icon: CalendarBlank,  label: "Harmonogram",  segment: "schedule"     },

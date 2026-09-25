@@ -4,8 +4,18 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { use } from "react";
-import { Trophy, CalendarBlank, ChartBar } from "@phosphor-icons/react";
+import { motion, AnimatePresence } from "motion/react";
 import { PublicHeader } from "@/components/layout/public-header";
+import { calculateStandings } from "@/lib/tournament-logic";
+import {
+  Trophy,
+  CalendarBlank,
+  Users,
+  SoccerBall,
+  Clock,
+  MapPin,
+  ListNumbers
+} from "@phosphor-icons/react";
 
 export default function PublicTournamentPage({
   params,
@@ -14,132 +24,236 @@ export default function PublicTournamentPage({
 }) {
   const { tournamentId } = use(params);
 
-  const t = useQuery(api.tournaments.getPublic, { id: tournamentId as Id<"tournaments"> });
-  const players = useQuery(api.players.getByTournament, { tournamentId: tournamentId as Id<"tournaments"> });
-  const matches = useQuery(api.matches.getByTournament, { tournamentId: tournamentId as Id<"tournaments"> });
-  const phases = useQuery(api.phases.getByTournament, { tournamentId: tournamentId as Id<"tournaments"> });
+  const t = useQuery(api.tournaments.getPublic, {
+    id: tournamentId as Id<"tournaments">,
+  });
+  
+  const players = useQuery(api.players.getByTournament, {
+    tournamentId: tournamentId as Id<"tournaments">,
+  });
+  
+  const matches = useQuery(api.matches.getByTournament, {
+    tournamentId: tournamentId as Id<"tournaments">,
+  });
+  
+  const phases = useQuery(api.phases.getByTournament, {
+    tournamentId: tournamentId as Id<"tournaments">,
+  });
 
-  if (t === undefined || players === undefined || matches === undefined) {
-    return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500">Wczytywanie...</div>;
+  if (t === undefined || players === undefined || matches === undefined || phases === undefined) {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-zinc-800 border-t-blue-500 animate-spin" />
+      </div>
+    );
   }
+
   if (t === null) {
-    return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-zinc-500">Turniej nie istnieje lub jest prywatny.</div>;
+    return (
+      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4">
+        <div className="w-16 h-16 bg-zinc-900 rounded-2xl flex items-center justify-center mb-6">
+          <SoccerBall className="w-8 h-8 text-zinc-700" />
+        </div>
+        <h1 className="text-2xl font-semibold mb-2">Nie znaleziono turnieju</h1>
+        <p className="text-zinc-500 text-center max-w-sm">
+          Ten turniej nie istnieje lub jego strona publiczna została wyłączona przez organizatora.
+        </p>
+      </div>
+    );
   }
 
-  // Calculate Standings
-  const calculateStandings = () => {
-    const standings: Record<string, { points: number; played: number; scored: number; conceded: number }> = {};
-    players.forEach(p => {
-      standings[p._id] = { points: 0, played: 0, scored: 0, conceded: 0 };
-    });
+  const finishedMatches = matches
+    .filter(m => m.status === "finished")
+    .sort((a, b) => (b._creationTime || 0) - (a._creationTime || 0))
+    .slice(0, 5);
+    
+  const upcomingMatches = matches
+    .filter(m => m.status === "pending" || m.status === "in_progress")
+    .slice(0, 5);
 
-    matches.forEach(m => {
-      if (m.status !== "finished" || !m.player1Id || !m.player2Id) return;
-      
-      const p1 = standings[m.player1Id];
-      const p2 = standings[m.player2Id];
-      if (!p1 || !p2) return;
-
-      p1.played += 1;
-      p2.played += 1;
-      p1.scored += (m.player1Score || 0);
-      p1.conceded += (m.player2Score || 0);
-      p2.scored += (m.player2Score || 0);
-      p2.conceded += (m.player1Score || 0);
-
-      if (m.player1Score! > m.player2Score!) { p1.points += 3; }
-      else if (m.player2Score! > m.player1Score!) { p2.points += 3; }
-      else { p1.points += 1; p2.points += 1; }
-    });
-
-    return Object.entries(standings)
-      .map(([id, stats]) => ({ id, name: players.find(p => p._id === id)?.name || "?", ...stats }))
-      .sort((a, b) => b.points - a.points || (b.scored - b.conceded) - (a.scored - a.conceded));
+  const statusMap = {
+    draft: { label: "Planowany", color: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20" },
+    active: { label: "Trwa", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
+    finished: { label: "Zakończony", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" }
   };
-
-  const standings = calculateStandings();
+  const statusInfo = statusMap[t.status];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-zinc-950 text-zinc-50 selection:bg-blue-500/30">
       <PublicHeader tournamentName={t.name} tournamentId={tournamentId} />
       
-      {/* Hero */}
-      <div className="border-b border-border/50 bg-card py-12 px-6">
-        <div className="max-w-4xl mx-auto flex items-center gap-6">
-          <div className="w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.15)]">
-            <Trophy className="w-10 h-10" weight="duotone" />
-          </div>
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Hero */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <span className={`px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full border ${statusInfo.color}`}>
+              {statusInfo.label}
+            </span>
+            {t.sport && (
+              <span className="text-sm font-medium text-zinc-400 flex items-center gap-1.5">
+                <SoccerBall weight="fill" className="text-zinc-500" />
+                {t.sport}
               </span>
-              <span className="text-emerald-500 text-xs font-bold uppercase tracking-widest">LIVE</span>
+            )}
+          </div>
+          
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-4 leading-tight">
+            {t.name}
+          </h1>
+          
+          {t.description && (
+            <p className="text-lg text-zinc-400 max-w-2xl mb-8 leading-relaxed">
+              {t.description}
+            </p>
+          )}
+          
+          <div className="flex flex-wrap items-center gap-6 text-sm font-medium text-zinc-400 bg-zinc-900/50 border border-zinc-800/50 p-4 rounded-2xl w-fit">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-blue-400" />
+              {players.length} uczestników
             </div>
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-foreground">{t.name}</h1>
-            {t.sport && <p className="text-muted-foreground mt-2 font-medium">{t.sport}</p>}
+            <div className="w-1 h-1 rounded-full bg-zinc-700" />
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-400" />
+              {phases.length} etapy
+            </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
 
-      <main className="max-w-4xl mx-auto px-6 py-12 grid md:grid-cols-2 gap-12">
-        
-        {/* Tabela wyników */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 border-b border-border/50 pb-4">
-            <ChartBar className="text-blue-500 w-6 h-6" /> Tabela
-          </h2>
-          <div className="bg-card border border-border/50 rounded-2xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-900/50 border-b border-border/50 text-muted-foreground">
-                <tr>
-                  <th className="py-3 px-4 text-left font-medium">#</th>
-                  <th className="py-3 px-4 text-left font-medium">Uczestnik</th>
-                  <th className="py-3 px-4 text-center font-medium">M</th>
-                  <th className="py-3 px-4 text-center font-medium">PKT</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {standings.map((row, idx) => (
-                  <tr key={row.id} className="hover:bg-zinc-900/30 transition-colors">
-                    <td className="py-3 px-4 text-zinc-500 font-mono">{idx + 1}</td>
-                    <td className="py-3 px-4 font-medium text-zinc-200">{row.name}</td>
-                    <td className="py-3 px-4 text-center text-zinc-500">{row.played}</td>
-                    <td className="py-3 px-4 text-center font-bold text-blue-400">{row.points}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Ostatnie mecze */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold flex items-center gap-2 border-b border-border/50 pb-4">
-            <CalendarBlank className="text-blue-500 w-6 h-6" /> Mecze
-          </h2>
-          <div className="space-y-3">
-            {matches.length === 0 && <p className="text-muted-foreground text-sm">Brak meczów.</p>}
-            {matches.slice().reverse().map(m => {
-              const p1 = players.find(p => p._id === m.player1Id)?.name || "?";
-              const p2 = players.find(p => p._id === m.player2Id)?.name || "?";
-              return (
-                <div key={m._id} className="bg-card border border-border/50 rounded-xl p-4 flex items-center justify-between shadow-sm">
-                  <div className={`font-medium flex-1 text-right truncate ${m.status === "finished" && m.player1Score! > m.player2Score! ? "text-emerald-400" : "text-zinc-300"}`}>{p1}</div>
-                  <div className="px-4 font-mono font-bold tracking-widest text-zinc-100 bg-zinc-950 py-1.5 rounded-lg mx-3 border border-zinc-800">
-                    {m.status === "finished" ? `${m.player1Score} : ${m.player2Score}` : "VS"}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main content - Standings */}
+          <div className="lg:col-span-2 space-y-12">
+            {phases.map(phase => (
+              <div key={phase._id} className="space-y-6">
+                <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2 pb-2 border-b border-zinc-800">
+                  <ListNumbers className="w-6 h-6 text-blue-500" />
+                  {phase.name}
+                </h2>
+                
+                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="text-xs uppercase bg-zinc-950/50 text-zinc-400">
+                        <tr>
+                          <th className="px-4 py-3 w-12 text-center">#</th>
+                          <th className="px-4 py-3">Uczestnik</th>
+                          <th className="px-3 py-3 text-center" title="Mecze">M</th>
+                          <th className="px-3 py-3 text-center text-emerald-400" title="Wygrane">W</th>
+                          <th className="px-3 py-3 text-center text-amber-400" title="Remisy">R</th>
+                          <th className="px-3 py-3 text-center text-rose-400" title="Przegrane">P</th>
+                          <th className="px-3 py-3 text-center" title="Bramki/Punkty">+/-</th>
+                          <th className="px-4 py-3 text-center text-blue-400 font-bold" title="Punkty w tabeli">PKT</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-800/50">
+                        {calculateStandings(
+                          players.map(p => p._id), 
+                          matches.filter(m => m.phaseId === phase._id), 
+                          players as any,
+                          t.scoring.winPoints,
+                          t.scoring.drawPoints,
+                          t.scoring.lossPoints
+                        ).map((row, i) => (
+                          <tr key={row.playerId} className="hover:bg-zinc-800/30 transition-colors">
+                            <td className="px-4 py-3 text-center font-mono text-zinc-500">{i + 1}</td>
+                            <td className="px-4 py-3 font-medium text-zinc-200">
+                              <div className="flex items-center gap-2">
+                                <img 
+                                  src={`https://api.dicebear.com/9.x/micah/svg?seed=${encodeURIComponent(row.playerName)}&backgroundColor=27272a`} 
+                                  alt="" 
+                                  className="w-6 h-6 rounded-full" 
+                                />
+                                {row.playerName}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-center text-zinc-400 font-mono">{row.played}</td>
+                            <td className="px-3 py-3 text-center text-emerald-400/80 font-mono">{row.won}</td>
+                            <td className="px-3 py-3 text-center text-amber-400/80 font-mono">{row.drawn}</td>
+                            <td className="px-3 py-3 text-center text-rose-400/80 font-mono">{row.lost}</td>
+                            <td className="px-3 py-3 text-center text-zinc-500 font-mono text-xs">
+                              {row.goalsFor}:{row.goalsAgainst}
+                            </td>
+                            <td className="px-4 py-3 text-center font-bold text-blue-400 text-base">{row.points}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <div className={`font-medium flex-1 text-left truncate ${m.status === "finished" && m.player2Score! > m.player1Score! ? "text-emerald-400" : "text-zinc-300"}`}>{p2}</div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
+          </div>
+          
+          {/* Sidebar - Recent & Upcoming */}
+          <div className="space-y-8">
+            
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-emerald-500" />
+                Ostatnie wyniki
+              </h3>
+              
+              <div className="space-y-2">
+                {finishedMatches.length === 0 ? (
+                  <p className="text-sm text-zinc-500 text-center py-4">Brak zakończonych meczów</p>
+                ) : (
+                  finishedMatches.map(m => {
+                    const p1 = players.find(p => p._id === m.player1Id)?.name ?? "BYE";
+                    const p2 = players.find(p => p._id === m.player2Id)?.name ?? "BYE";
+                    return (
+                      <div key={m._id} className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-3 flex items-center justify-between">
+                        <div className="flex-1 text-right text-sm font-medium text-zinc-300 truncate pr-2">{p1}</div>
+                        <div className="shrink-0 font-bold font-mono px-3 py-1 bg-zinc-900 rounded-lg text-blue-400 border border-zinc-800">
+                          {m.player1Score} - {m.player2Score}
+                        </div>
+                        <div className="flex-1 text-left text-sm font-medium text-zinc-300 truncate pl-2">{p2}</div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <CalendarBlank className="w-5 h-5 text-blue-500" />
+                Nadchodzące
+              </h3>
+              
+              <div className="space-y-2">
+                {upcomingMatches.length === 0 ? (
+                  <p className="text-sm text-zinc-500 text-center py-4">Brak zaplanowanych meczów</p>
+                ) : (
+                  upcomingMatches.map(m => {
+                    const p1 = players.find(p => p._id === m.player1Id)?.name ?? "BYE";
+                    const p2 = players.find(p => p._id === m.player2Id)?.name ?? "BYE";
+                    return (
+                      <div key={m._id} className="bg-zinc-950 border border-zinc-800/80 rounded-xl p-3 text-sm">
+                        <div className="flex items-center justify-between mb-1.5 text-xs text-zinc-500">
+                          <span>{m.matchLabel || `Mecz ${m.matchNumber}`}</span>
+                          {m.scheduledTime && <span className="text-blue-400/80">{m.scheduledTime}</span>}
+                        </div>
+                        <div className="flex items-center justify-between font-medium">
+                          <span className="truncate">{p1}</span>
+                          <span className="text-zinc-600 mx-2 text-xs font-mono">VS</span>
+                          <span className="truncate">{p2}</span>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
-
       </main>
     </div>
   );
 }
 
-export const runtime = 'edge';
+export const runtime = "edge";

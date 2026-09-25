@@ -19,6 +19,17 @@ export const get = query({
   },
 });
 
+// ─── Get tournament by slug ───────────────────────────────────
+export const getBySlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
+    return await ctx.db
+      .query("tournaments")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .first();
+  },
+});
+
 // ─── Get tournament by ID (public - no auth needed) ───────────
 export const getPublic = query({
   args: { id: v.id("tournaments") },
@@ -45,10 +56,30 @@ export const create = mutation({
       ? [{ id: crypto.randomUUID(), date: firstMatchDay, startTime: "09:00", endTime: "18:00" }]
       : [];
 
+    // Generate unique slug from name
+    const baseSlug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40);
+    
+    let slug = baseSlug;
+    let attempt = 0;
+    while (true) {
+      const existing = await ctx.db
+        .query("tournaments")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .first();
+      if (!existing) break;
+      attempt++;
+      slug = `${baseSlug}-${attempt}`;
+    }
+
     const id = await ctx.db.insert("tournaments", {
       name,
       sport,
       adminToken,
+      slug,
       status: "draft",
       isOnline: false,
       matchDays,
@@ -79,6 +110,29 @@ export const updateName = mutation({
     const t = await ctx.db.get(id);
     if (!t || t.adminToken !== adminToken) throw new Error("Unauthorized");
     await ctx.db.patch(id, { name, updatedAt: Date.now() });
+  },
+});
+
+// ─── Update slug ──────────────────────────────────────────────
+export const updateSlug = mutation({
+  args: { id: v.id("tournaments"), slug: v.string(), adminToken: v.string() },
+  handler: async (ctx, { id, slug, adminToken }) => {
+    const t = await ctx.db.get(id);
+    if (!t || t.adminToken !== adminToken) throw new Error("Unauthorized");
+    
+    // Validate slug format
+    const validSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "").slice(0, 60);
+    if (!validSlug) throw new Error("Nieprawidłowy slug");
+    
+    // Check uniqueness
+    const existing = await ctx.db
+      .query("tournaments")
+      .withIndex("by_slug", (q) => q.eq("slug", validSlug))
+      .first();
+    if (existing && existing._id !== id) throw new Error("Slug już istnieje");
+    
+    await ctx.db.patch(id, { slug: validSlug, updatedAt: Date.now() });
+    return validSlug;
   },
 });
 

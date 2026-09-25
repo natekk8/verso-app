@@ -216,9 +216,9 @@ export const updateSchedule = mutation({
   args: {
     id: v.id('matches'),
     adminToken: v.string(),
-    scheduledDayId: v.optional(v.id('scheduleDays')),
+    scheduledDayId: v.optional(v.string()),
     scheduledTime: v.optional(v.string()),
-    locationId: v.optional(v.id('locations')),
+    locationId: v.optional(v.string()),
   },
   handler: async (ctx, { id, adminToken, scheduledDayId, scheduledTime, locationId }) => {
     const match = await ctx.db.get(id);
@@ -323,5 +323,34 @@ export const removeByPhase = mutation({
     }
 
     return deletedIds;
+  },
+});
+
+/** Creates a single match manually (for custom scheduling). */
+export const createSingle = mutation({
+  args: {
+    adminToken: v.string(),
+    tournamentId: v.id('tournaments'),
+    phaseId: v.id('phases'),
+    groupId: v.optional(v.id('groups')),
+    player1Id: v.union(v.id('players'), v.null()),
+    player2Id: v.union(v.id('players'), v.null()),
+    round: v.number(),
+    matchNumber: v.number(),
+    matchLabel: v.string(),
+    scheduledDayId: v.optional(v.string()),
+    scheduledTime: v.optional(v.string()),
+  },
+  handler: async (ctx, { adminToken, tournamentId, ...matchData }) => {
+    const tournament = await ctx.db.get(tournamentId);
+    if (!tournament || tournament.adminToken !== adminToken) {
+      throw new Error('Nieprawidłowy token administratora.');
+    }
+    const id = await ctx.db.insert('matches', {
+      tournamentId,
+      ...matchData,
+      status: 'pending',
+    });
+    return id;
   },
 });

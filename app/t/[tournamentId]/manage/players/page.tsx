@@ -4,7 +4,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { getAdminToken } from "@/lib/auth";
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,11 @@ export default function PlayersPage({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
-  const adminToken = getAdminToken(tournamentId) || "";
+  const [adminToken, setAdminToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setAdminToken(getAdminToken(tournamentId) || "");
+  }, [tournamentId]);
 
   const players = useQuery(api.players.getByTournament, { tournamentId: tournamentId as Id<"tournaments"> });
   const addPlayer = useMutation(api.players.add);
@@ -29,14 +33,19 @@ export default function PlayersPage({
   const [newName, setNewName] = useState("");
   const [bulkNames, setBulkNames] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const handleAddSingle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim() || !adminToken) return;
     try {
       await addPlayer({
         tournamentId: tournamentId as Id<"tournaments">,
-        adminToken,
+        adminToken: adminToken,
         name: newName.trim()
       });
       setNewName("");
@@ -48,7 +57,7 @@ export default function PlayersPage({
 
   const handleAddBulk = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!bulkNames.trim()) return;
+    if (!bulkNames.trim() || !adminToken) return;
     const names = bulkNames.split("\n").map(n => n.trim()).filter(Boolean);
     if (names.length === 0) return;
 
@@ -66,7 +75,7 @@ export default function PlayersPage({
   };
 
   const handleCopyLink = (player: any) => {
-    const url = `${window.location.origin}/t/${tournamentId}/player/${player.playerToken}`;
+    const url = `${origin}/t/${tournamentId}/player/${player.playerToken}`;
     navigator.clipboard.writeText(url);
     setCopiedId(player._id);
     toast.success("Link skopiowany!");
@@ -74,11 +83,12 @@ export default function PlayersPage({
   };
 
   const handleRemove = async (id: string) => {
+    if (!adminToken) return;
     if (!confirm("Na pewno usunąć tego uczestnika?")) return;
     try {
       await removePlayer({
         playerId: id as Id<"players">,
-        adminToken
+        adminToken: adminToken,
       });
       toast.success("Uczestnik usunięty");
     } catch (e) {

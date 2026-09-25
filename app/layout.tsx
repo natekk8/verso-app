@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "@/components/providers/convex-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -29,33 +28,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pl" suppressHydrationWarning>
+    // Always dark — no system/light mode switching (it was causing navigation bugs)
+    <html lang="pl" className="dark" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased bg-zinc-950 text-zinc-50`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <ConvexClientProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster
-                position="bottom-right"
-                theme="dark"
-                toastOptions={{
-                  style: {
-                    background: "hsl(var(--background))",
-                    border: "1px solid hsl(var(--border))",
-                    color: "hsl(var(--foreground))",
-                  },
-                }}
-              />
-            </TooltipProvider>
-          </ConvexClientProvider>
-        </ThemeProvider>
+        <ConvexClientProvider>
+          <TooltipProvider>
+            {children}
+            <Toaster
+              position="bottom-right"
+              theme="dark"
+              toastOptions={{
+                style: {
+                  background: "#18181b",
+                  border: "1px solid #27272a",
+                  color: "#fafafa",
+                },
+              }}
+            />
+          </TooltipProvider>
+        </ConvexClientProvider>
       </body>
     </html>
   );

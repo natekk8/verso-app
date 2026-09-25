@@ -7,6 +7,7 @@ export default defineSchema({
     name: v.string(),
     sport: v.optional(v.string()),
     adminToken: v.string(), // secret, only admin knows this
+    slug: v.optional(v.string()), // friendly URL slug
     status: v.union(v.literal("draft"), v.literal("active"), v.literal("finished")),
     isOnline: v.boolean(),
 
@@ -54,7 +55,9 @@ export default defineSchema({
     registrationEnabled: v.boolean(),
     description: v.optional(v.string()),
     updatedAt: v.number(),
-  }).index("by_status", ["status"]),
+  })
+    .index("by_status", ["status"])
+    .index("by_slug", ["slug"]),
 
   // ─── Players ──────────────────────────────────────────────────
   players: defineTable({
@@ -112,7 +115,7 @@ export default defineSchema({
     player2Score: v.optional(v.number()),
     player1Sets: v.optional(v.number()),
     player2Sets: v.optional(v.number()),
-      setsDetails: v.optional(v.array(v.object({ p1: v.number(), p2: v.number() }))),
+    setsDetails: v.optional(v.array(v.object({ p1: v.number(), p2: v.number() }))),
     winnerId: v.optional(v.union(v.id("players"), v.null())), // null = draw
     round: v.number(), // round number (1-based)
     matchNumber: v.number(), // unique within phase

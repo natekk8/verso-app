@@ -12,6 +12,7 @@ import {
   CalendarBlank,
   SmileyXEyes,
   ClockCountdown,
+  Lightning,
 } from "@phosphor-icons/react";
 import { PublicHeader } from "@/components/layout/public-header";
 
@@ -78,7 +79,7 @@ function StatCard({
     >
       <div className={`${color} opacity-80`}>{icon}</div>
       <span className={`text-4xl font-black tracking-tight ${color}`}>{value}</span>
-      <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+      <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 text-center">
         {label}
       </span>
     </motion.div>
@@ -107,27 +108,31 @@ function MatchCard({
   match,
   playerId,
   players,
-  index,
 }: {
   match: Match;
   playerId: Id<"players">;
   players: { _id: string; name: string }[];
-  index: number;
 }) {
   const isPlayer1 = match.player1Id === playerId;
   const opponentId = isPlayer1 ? match.player2Id : match.player1Id;
   const opponentName = players.find((p) => p._id === opponentId)?.name ?? "BYE";
 
   const isFinished = match.status === "finished";
-  const isPending = match.status === "pending" || match.status === "in_progress";
 
   const myScore = isPlayer1 ? match.player1Score : match.player2Score;
   const theirScore = isPlayer1 ? match.player2Score : match.player1Score;
 
+  const hasSets = match.setsDetails && match.setsDetails.length > 0;
+  const mySets = isPlayer1 ? match.player1Sets : match.player2Sets;
+  const theirSets = isPlayer1 ? match.player2Sets : match.player1Sets;
+
   let result: "win" | "draw" | "loss" | "pending" = "pending";
-  if (isFinished && myScore !== undefined && theirScore !== undefined) {
-    if (myScore > theirScore) result = "win";
-    else if (myScore < theirScore) result = "loss";
+  if (isFinished) {
+    const finalMyScore = hasSets ? (mySets ?? 0) : (myScore ?? 0);
+    const finalTheirScore = hasSets ? (theirSets ?? 0) : (theirScore ?? 0);
+
+    if (finalMyScore > finalTheirScore) result = "win";
+    else if (finalMyScore < finalTheirScore) result = "loss";
     else result = "draw";
   }
 
@@ -158,14 +163,6 @@ function MatchCard({
     },
   }[result];
 
-  // Set score string
-  let setStr: string | null = null;
-  if (isFinished && match.setsDetails && match.setsDetails.length > 0) {
-    const mySets = isPlayer1 ? match.player1Sets : match.player2Sets;
-    const theirSets = isPlayer1 ? match.player2Sets : match.player1Sets;
-    setStr = `${mySets ?? 0}:${theirSets ?? 0} ${formatSets(match.setsDetails, isPlayer1)}`;
-  }
-
   return (
     <motion.div
       variants={itemVariants}
@@ -189,26 +186,26 @@ function MatchCard({
 
       {/* Right side */}
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-        {/* Set scores */}
-        {setStr && (
+        {/* Set details */}
+        {hasSets && isFinished && (
           <div className="hidden md:block text-right">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">
               Sety
             </p>
-            <p className={`text-sm font-mono font-semibold ${resultConfig.scoreCls}`}>
-              {setStr}
+            <p className={`text-sm font-mono font-medium ${resultConfig.scoreCls} opacity-80`}>
+              {formatSets(match.setsDetails!, isPlayer1)}
             </p>
           </div>
         )}
 
-        {/* Score / VS */}
+        {/* Main Score / VS */}
         {isFinished ? (
           <div className="text-right">
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-0.5">
               Wynik
             </p>
             <p className={`text-xl font-black font-mono tracking-tight ${resultConfig.scoreCls}`}>
-              {myScore} : {theirScore}
+              {hasSets ? `${mySets ?? 0} : ${theirSets ?? 0}` : `${myScore ?? 0} : ${theirScore ?? 0}`}
             </p>
           </div>
         ) : (
@@ -252,7 +249,6 @@ export default function PlayerDashboardPage({
 
   const player = players?.find((p) => p.playerToken === playerToken);
 
-  // ✅ Fix: only run this query once we have a valid player._id
   const matches = useQuery(
     api.matches.getByPlayer,
     player
@@ -293,14 +289,23 @@ export default function PlayerDashboardPage({
   let wins = 0;
   let draws = 0;
   let losses = 0;
+  let pointsScored = 0;
 
   (matches ?? []).forEach((m) => {
-    if (m.status !== "finished") return;
     const isP1 = m.player1Id === player._id;
-    const myScore = isP1 ? m.player1Score! : m.player2Score!;
-    const theirScore = isP1 ? m.player2Score! : m.player1Score!;
-    if (myScore > theirScore) wins++;
-    else if (myScore < theirScore) losses++;
+    const p1Score = m.player1Score ?? 0;
+    const p2Score = m.player2Score ?? 0;
+
+    pointsScored += isP1 ? p1Score : p2Score;
+
+    if (m.status !== "finished") return;
+
+    const hasSets = m.setsDetails && m.setsDetails.length > 0;
+    const myS = hasSets ? (isP1 ? m.player1Sets ?? 0 : m.player2Sets ?? 0) : (isP1 ? p1Score : p2Score);
+    const theirS = hasSets ? (isP1 ? m.player2Sets ?? 0 : m.player1Sets ?? 0) : (isP1 ? p2Score : p1Score);
+
+    if (myS > theirS) wins++;
+    else if (myS < theirS) losses++;
     else draws++;
   });
 
@@ -334,7 +339,7 @@ export default function PlayerDashboardPage({
             className="flex flex-col sm:flex-row items-start sm:items-center gap-6"
           >
             {/* Avatar */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <img
                 src={dicebearInitials(player.name)}
                 alt={player.name}
@@ -378,7 +383,7 @@ export default function PlayerDashboardPage({
           </motion.div>
 
           {/* Stat cards */}
-          <div className="flex gap-3 mt-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
             <StatCard
               value={wins}
               label="Wygrane"
@@ -399,6 +404,13 @@ export default function PlayerDashboardPage({
               color="text-rose-400"
               icon={<WarningCircle weight="fill" className="w-5 h-5" />}
               delay={0.15}
+            />
+            <StatCard
+              value={pointsScored}
+              label="Zdobyte Punkty"
+              color="text-blue-400"
+              icon={<Lightning weight="fill" className="w-5 h-5" />}
+              delay={0.2}
             />
           </div>
         </div>
@@ -454,13 +466,12 @@ export default function PlayerDashboardPage({
             animate="show"
             className="space-y-3"
           >
-            {matches.map((m, i) => (
+            {matches.map((m) => (
               <MatchCard
                 key={m._id}
                 match={m as Match}
                 playerId={player._id}
                 players={players}
-                index={i}
               />
             ))}
           </motion.div>

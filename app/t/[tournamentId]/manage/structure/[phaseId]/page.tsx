@@ -10,12 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
@@ -29,6 +35,7 @@ import {
   ListBullets,
   WarningCircle,
   X,
+  Clock,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 
@@ -109,14 +116,19 @@ export default function ManagePhasePage({
   ) {
     return (
       <div className="flex items-center justify-center h-64 text-zinc-500 text-sm">
-        Wczytywanie...
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+          className="w-5 h-5 border-2 border-zinc-700 border-t-blue-500 rounded-full mr-3"
+        />
+        Wczytywanie struktury fazy...
       </div>
     );
   }
 
   if (!phase) {
     return (
-      <div className="flex items-center gap-2 p-8 text-rose-500 text-sm">
+      <div className="flex items-center gap-2 p-8 text-rose-500 text-sm bg-rose-500/10 rounded-xl border border-rose-500/20 max-w-lg mx-auto mt-10">
         <WarningCircle className="w-5 h-5" />
         Nie znaleziono fazy.
       </div>
@@ -333,15 +345,15 @@ export default function ManagePhasePage({
       <div className="flex items-center gap-4">
         <Link
           href={`/t/${tournamentId}/manage/structure`}
-          className="p-2 bg-zinc-900 hover:bg-zinc-800 rounded-xl transition-colors shrink-0"
+          className="p-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 rounded-xl transition-all shrink-0"
         >
-          <CaretLeft className="w-5 h-5" />
+          <CaretLeft className="w-5 h-5 text-zinc-300" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Konfiguracja: {phase.name}
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-100 flex items-center gap-2">
+            Konfiguracja: <span className="text-blue-400">{phase.name}</span>
           </h1>
-          <p className="text-sm text-zinc-500 mt-0.5">
+          <p className="text-sm text-zinc-400 mt-0.5">
             Przypisz graczy do grup i wygeneruj harmonogram meczów.
           </p>
         </div>
@@ -350,10 +362,12 @@ export default function ManagePhasePage({
       {/* Two-column layout */}
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* ── LEFT: Players pool ─────────────────────────────── */}
-        <div className="w-full lg:w-72 shrink-0 space-y-3">
+        <div className="w-full lg:w-72 shrink-0 space-y-4">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-zinc-400" />
-            <h2 className="text-sm font-semibold text-zinc-300">
+            <div className="p-1.5 bg-blue-500/10 rounded-md">
+              <Users className="w-4 h-4 text-blue-400" />
+            </div>
+            <h2 className="text-sm font-semibold text-zinc-200">
               Pula zawodników
             </h2>
             <span className="ml-auto text-xs font-medium bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">
@@ -361,63 +375,69 @@ export default function ManagePhasePage({
             </span>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+          <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
             {unassignedPlayers.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-zinc-600 text-xs gap-2">
-                <Users className="w-8 h-8" />
-                <span>Wszyscy przypisani</span>
+              <div className="flex flex-col items-center justify-center py-12 text-zinc-500 text-xs gap-3">
+                <div className="p-3 bg-zinc-800/50 rounded-full">
+                  <Users className="w-6 h-6 text-zinc-400" />
+                </div>
+                <span>Wszyscy zawodnicy przypisani</span>
               </div>
             ) : (
-              <div className="divide-y divide-zinc-800">
-                {unassignedPlayers.map((p) => (
-                  <motion.div
-                    key={p._id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
-                    className="flex items-center justify-between px-4 py-2.5 hover:bg-zinc-800/50 transition-colors"
-                  >
-                    <span className="text-sm font-medium truncate mr-2">
-                      {p.name}
-                    </span>
-                    {groups.length > 0 && (
-                      <select
-                        className="text-xs bg-zinc-950 border border-zinc-700 rounded-lg px-2 py-1 text-zinc-300 shrink-0 cursor-pointer hover:border-blue-500 transition-colors focus:outline-none focus:border-blue-500"
-                        defaultValue=""
-                        onChange={async (e) => {
-                          const gId = e.target.value;
-                          if (!gId) return;
-                          await handleAssignPlayer(p._id, gId);
-                          e.target.value = "";
-                        }}
-                      >
-                        <option value="" disabled>
-                          → Grupa
-                        </option>
-                        {groups.map((g) => (
-                          <option key={g._id} value={g._id}>
-                            {g.name}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </motion.div>
-                ))}
+              <div className="divide-y divide-zinc-800/60 max-h-[500px] overflow-y-auto">
+                <AnimatePresence>
+                  {unassignedPlayers.map((p, i) => (
+                    <motion.div
+                      key={p._id}
+                      layout
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -8 }}
+                      transition={{ delay: i * 0.02 }}
+                      className="flex items-center justify-between px-4 py-3 hover:bg-zinc-800/40 transition-colors group"
+                    >
+                      <span className="text-sm font-medium text-zinc-200 truncate mr-3">
+                        {p.name}
+                      </span>
+                      {groups.length > 0 && (
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Select
+                            onValueChange={async (gId: string | null) => {
+                              if (!gId) return;
+                              await handleAssignPlayer(p._id, gId);
+                            }}
+                          >
+                            <SelectTrigger className="h-7 px-2 text-[11px] w-[100px] bg-zinc-950 border-zinc-700 hover:border-blue-500/50 transition-colors">
+                              <SelectValue placeholder="Do grupy..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {groups.map((g) => (
+                                <SelectItem key={g._id} value={g._id} className="text-xs">
+                                  {g.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
               </div>
             )}
           </div>
 
-          {groups.length === 0 && (
-            <p className="text-xs text-zinc-600 text-center">
+          {groups.length === 0 && unassignedPlayers.length > 0 && (
+            <p className="text-xs text-zinc-500 text-center px-4">
               Utwórz grupę po prawej, by przypisać zawodników.
             </p>
           )}
         </div>
 
         {/* ── RIGHT: Groups + Generator ──────────────────────── */}
-        <div className="flex-1 min-w-0 space-y-6">
+        <div className="flex-1 min-w-0 space-y-8">
           {/* Toolbar: create group + generate controls */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 p-4 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl">
             {/* New group form */}
             <div className="flex gap-2 flex-1 min-w-[260px]">
               <Input
@@ -425,23 +445,25 @@ export default function ManagePhasePage({
                 onChange={(e) => setNewGroupName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleCreateGroup()}
                 placeholder="Nazwa grupy (np. Grupa A)"
-                className="bg-zinc-900 border-zinc-800 h-9"
+                className="bg-zinc-950 border-zinc-800 h-9"
               />
               <Button
                 onClick={handleCreateGroup}
                 disabled={!newGroupName.trim() || !adminToken}
                 variant="outline"
-                className="h-9 shrink-0 border-zinc-700 hover:border-blue-500 hover:bg-blue-500/10 hover:text-blue-400"
+                className="h-9 shrink-0 border-zinc-700 hover:border-blue-500 hover:bg-blue-500/10 hover:text-blue-400 transition-colors"
               >
                 <Plus className="w-4 h-4 mr-1.5" />
                 Dodaj grupę
               </Button>
             </div>
 
+            <div className="w-px h-6 bg-zinc-800 hidden sm:block mx-1" />
+
             {/* Round-robin generator */}
             {groups.length > 0 && (
-              <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-1.5">
-                <label className="text-xs text-zinc-500 whitespace-nowrap font-medium">
+              <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 h-9">
+                <label className="text-[11px] text-zinc-500 whitespace-nowrap font-medium uppercase tracking-wider ml-1">
                   Rund:
                 </label>
                 <Input
@@ -450,15 +472,15 @@ export default function ManagePhasePage({
                   max={10}
                   value={legs}
                   onChange={(e) => setLegs(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-14 h-7 text-center bg-zinc-950 border-zinc-700 text-sm"
+                  className="w-12 h-6 px-1 text-center bg-zinc-900 border-none text-xs focus-visible:ring-1 focus-visible:ring-blue-500"
                 />
                 <Button
                   onClick={handleGenerateRoundRobin}
                   disabled={generatingRR || !adminToken}
-                  className="h-7 bg-blue-600 hover:bg-blue-500 text-white text-xs px-3"
+                  className="h-6 bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-2.5 rounded-md transition-colors"
                 >
-                  <Shuffle className="w-3.5 h-3.5 mr-1.5" />
-                  {generatingRR ? "Generuję..." : "Generuj każdy z każdym"}
+                  <Shuffle className="w-3 h-3 mr-1" />
+                  {generatingRR ? "Generuję..." : "Każdy z każdym"}
                 </Button>
               </div>
             )}
@@ -466,185 +488,205 @@ export default function ManagePhasePage({
             {/* Manual match button */}
             <Button
               variant="outline"
-              className="h-9 border-zinc-700 text-zinc-300 hover:border-zinc-500"
+              className="h-9 border-zinc-800 bg-zinc-950 text-zinc-300 hover:text-zinc-100 hover:border-zinc-700 transition-colors"
               onClick={() => setManualModalOpen(true)}
             >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Dodaj mecz ręcznie
+              <Plus className="w-4 h-4 mr-1.5 text-blue-500" />
+              Dodaj mecz
             </Button>
+          </div>
 
-            <Dialog open={manualModalOpen} onOpenChange={setManualModalOpen}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <SoccerBall className="w-4 h-4 text-blue-400" />
-                    Dodaj mecz ręcznie
-                  </DialogTitle>
-                </DialogHeader>
-
-                <div className="space-y-4 py-2">
-                  {/* Player 1 */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-zinc-400">Zawodnik 1</Label>
-                    <select
-                      value={manualForm.player1Id}
-                      onChange={(e) =>
-                        setManualForm((f) => ({ ...f, player1Id: e.target.value }))
-                      }
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
-                    >
-                      <option value="">— Wybierz zawodnika —</option>
-                      {allPlayers?.map((p) => (
-                        <option key={p._id} value={p._id}>
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
+          <Dialog open={manualModalOpen} onOpenChange={setManualModalOpen}>
+            <DialogContent className="sm:max-w-md bg-zinc-950 border-zinc-800 shadow-xl">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-zinc-100">
+                  <div className="p-1.5 bg-blue-500/10 rounded-md">
+                    <SoccerBall className="w-5 h-5 text-blue-400" />
                   </div>
+                  Dodaj mecz ręcznie
+                </DialogTitle>
+              </DialogHeader>
 
-                  {/* VS divider */}
-                  <div className="flex items-center gap-3 text-zinc-600 text-xs font-bold">
-                    <div className="flex-1 h-px bg-zinc-800" />
-                    VS
-                    <div className="flex-1 h-px bg-zinc-800" />
-                  </div>
-
-                  {/* Player 2 */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-zinc-400">Zawodnik 2</Label>
-                    <select
-                      value={manualForm.player2Id}
-                      onChange={(e) =>
-                        setManualForm((f) => ({ ...f, player2Id: e.target.value }))
-                      }
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-blue-500 transition-colors"
-                    >
-                      <option value="">— Wybierz zawodnika —</option>
-                      {allPlayers
-                        ?.filter((p) => p._id !== manualForm.player1Id)
-                        .map((p) => (
-                          <option key={p._id} value={p._id}>
-                            {p.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Round */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-zinc-400">Kolejka</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={manualForm.round}
-                        onChange={(e) =>
-                          setManualForm((f) => ({
-                            ...f,
-                            round: parseInt(e.target.value) || 1,
-                          }))
-                        }
-                        className="bg-zinc-900 border-zinc-700 h-9"
-                      />
-                    </div>
-
-                    {/* Match label */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-zinc-400">
-                        Etykieta meczu
-                      </Label>
-                      <Input
-                        value={manualForm.matchLabel}
-                        onChange={(e) =>
-                          setManualForm((f) => ({
-                            ...f,
-                            matchLabel: e.target.value,
-                          }))
-                        }
-                        placeholder="np. Finał, M12"
-                        className="bg-zinc-900 border-zinc-700 h-9"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Scheduled time */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-zinc-400">
-                      Godzina (opcjonalnie)
+              <div className="space-y-5 py-3">
+                {/* Players vs block */}
+                <div className="relative flex flex-col gap-2">
+                  {/* Player 1 Selection */}
+                  <div className="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl space-y-2">
+                    <Label className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
+                      Zawodnik 1 (Gospodarz)
                     </Label>
+                    <Select
+                      value={manualForm.player1Id}
+                      onValueChange={(v) =>
+                        setManualForm((f) => ({ ...f, player1Id: v || "" }))
+                      }
+                    >
+                      <SelectTrigger className="w-full h-9 bg-zinc-950 border-zinc-800">
+                        <SelectValue placeholder="Wybierz zawodnika" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        {allPlayers?.map((p) => (
+                          <SelectItem key={p._id} value={p._id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* VS Badge */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-7 h-7 rounded-full bg-zinc-950 border border-zinc-800 shadow-sm">
+                    <span className="text-[9px] font-bold text-zinc-500">VS</span>
+                  </div>
+
+                  {/* Player 2 Selection */}
+                  <div className="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-xl space-y-2">
+                    <Label className="text-[11px] uppercase tracking-wider text-zinc-500 font-semibold">
+                      Zawodnik 2 (Gość)
+                    </Label>
+                    <Select
+                      value={manualForm.player2Id}
+                      onValueChange={(v) =>
+                        setManualForm((f) => ({ ...f, player2Id: v || "" }))
+                      }
+                    >
+                      <SelectTrigger className="w-full h-9 bg-zinc-950 border-zinc-800">
+                        <SelectValue placeholder="Wybierz zawodnika" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        {allPlayers
+                          ?.filter((p) => p._id !== manualForm.player1Id)
+                          .map((p) => (
+                            <SelectItem key={p._id} value={p._id}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Round */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-zinc-400">Kolejka (Runda)</Label>
                     <Input
-                      type="time"
-                      value={manualForm.scheduledTime}
+                      type="number"
+                      min={1}
+                      value={manualForm.round}
                       onChange={(e) =>
                         setManualForm((f) => ({
                           ...f,
-                          scheduledTime: e.target.value,
+                          round: parseInt(e.target.value) || 1,
                         }))
                       }
-                      className="bg-zinc-900 border-zinc-700 h-9"
+                      className="bg-zinc-900 border-zinc-800 h-9"
+                    />
+                  </div>
+
+                  {/* Match label */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-zinc-400">
+                      Etykieta (np. Finał)
+                    </Label>
+                    <Input
+                      value={manualForm.matchLabel}
+                      onChange={(e) =>
+                        setManualForm((f) => ({
+                          ...f,
+                          matchLabel: e.target.value,
+                        }))
+                      }
+                      placeholder="Zostaw puste dla domyślnej"
+                      className="bg-zinc-900 border-zinc-800 h-9 placeholder:text-zinc-600"
                     />
                   </div>
                 </div>
 
-                <DialogFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setManualModalOpen(false);
-                      setManualForm(EMPTY_FORM);
-                    }}
-                    className="border-zinc-700"
-                  >
-                    Anuluj
-                  </Button>
-                  <Button
-                    onClick={handleSaveManualMatch}
-                    disabled={
-                      savingManual ||
-                      !manualForm.player1Id ||
-                      !manualForm.player2Id ||
-                      !adminToken
+                {/* Scheduled time */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-zinc-400 flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    Godzina (opcjonalnie)
+                  </Label>
+                  <Input
+                    type="time"
+                    value={manualForm.scheduledTime}
+                    onChange={(e) =>
+                      setManualForm((f) => ({
+                        ...f,
+                        scheduledTime: e.target.value,
+                      }))
                     }
-                    className="bg-blue-600 hover:bg-blue-500 text-white"
-                  >
-                    {savingManual ? "Zapisywanie..." : "Dodaj mecz"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
+                    className="bg-zinc-900 border-zinc-800 h-9 w-full"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-2 border-t border-zinc-800/50 pt-4 sm:justify-end">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setManualModalOpen(false);
+                    setManualForm(EMPTY_FORM);
+                  }}
+                  className="text-zinc-400 hover:text-zinc-200"
+                >
+                  Anuluj
+                </Button>
+                <Button
+                  onClick={handleSaveManualMatch}
+                  disabled={
+                    savingManual ||
+                    !manualForm.player1Id ||
+                    !manualForm.player2Id ||
+                    !adminToken
+                  }
+                  className="bg-blue-600 hover:bg-blue-500 text-white min-w-[120px]"
+                >
+                  {savingManual ? "Zapisywanie..." : "Dodaj mecz"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
           {/* Groups grid */}
           {groups.length === 0 ? (
-            <div className="border-2 border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center py-16 text-zinc-600 gap-3">
-              <Users className="w-10 h-10" />
-              <p className="text-sm font-medium">Brak grup</p>
-              <p className="text-xs">Wpisz nazwę grupy powyżej i kliknij „Dodaj grupę".</p>
+            <div className="border border-dashed border-zinc-800/60 bg-zinc-900/20 rounded-2xl flex flex-col items-center justify-center py-16 text-zinc-500 gap-3">
+              <div className="p-4 bg-zinc-800/30 rounded-full">
+                <Users className="w-8 h-8" />
+              </div>
+              <p className="text-sm font-medium text-zinc-300">Brak grup w tej fazie</p>
+              <p className="text-xs max-w-xs text-center">Wpisz nazwę grupy w panelu powyżej i kliknij „Dodaj grupę".</p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              <AnimatePresence>
-                {groups.map((g) => (
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              <AnimatePresence mode="popLayout">
+                {groups.map((g, i) => (
                   <motion.div
                     key={g._id}
-                    initial={{ opacity: 0, scale: 0.96 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.96 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden"
+                    layout
+                    initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30, delay: i * 0.04 }}
+                    className="bg-zinc-900/80 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm flex flex-col"
                   >
                     {/* Group header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800 bg-zinc-800/40">
-                      <h3 className="font-semibold text-sm text-zinc-200 tracking-tight">
-                        {g.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-zinc-500 font-medium">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800/60 bg-zinc-950/30">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                        <h3 className="font-semibold text-sm text-zinc-100 tracking-tight">
+                          {g.name}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                           {g.playerIds.length} graczy
                         </span>
                         <button
                           onClick={() => handleRemoveGroup(g._id)}
-                          className="text-zinc-600 hover:text-rose-500 transition-colors p-0.5 rounded"
+                          className="text-zinc-600 hover:text-rose-500 transition-colors p-1 rounded-md hover:bg-rose-500/10"
                           title="Usuń grupę"
                         >
                           <Trash className="w-3.5 h-3.5" />
@@ -653,36 +695,40 @@ export default function ManagePhasePage({
                     </div>
 
                     {/* Players in group */}
-                    <div className="p-2 space-y-1 min-h-[80px]">
+                    <div className="p-2 space-y-1 min-h-[100px] flex-1">
                       {g.playerIds.length === 0 ? (
-                        <div className="text-xs text-zinc-600 text-center py-5">
-                          Pusta grupa — przypisz zawodników z lewej
+                        <div className="text-xs text-zinc-500 h-full flex items-center justify-center text-center py-6">
+                          Pusta grupa — przypisz zawodników z panelu po lewej
                         </div>
                       ) : (
-                        g.playerIds.map((pid) => {
-                          if (!pid) return null;
-                          const player = allPlayers?.find((pl) => pl._id === pid);
-                          if (!player) return null;
-                          return (
-                            <div
-                              key={pid}
-                              className="flex items-center justify-between bg-zinc-800/50 hover:bg-zinc-800 rounded-lg px-3 py-1.5 group transition-colors"
-                            >
-                              <span className="text-xs font-medium text-zinc-300 truncate">
-                                {player.name}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleRemoveFromGroup(g._id, pid)
-                                }
-                                className="text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all ml-2 shrink-0"
-                                title="Usuń z grupy"
+                        <AnimatePresence>
+                          {g.playerIds.map((pid) => {
+                            if (!pid) return null;
+                            const player = allPlayers?.find((pl) => pl._id === pid);
+                            if (!player) return null;
+                            return (
+                              <motion.div
+                                key={pid}
+                                layout
+                                initial={{ opacity: 0, x: 10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, height: 0, margin: 0, overflow: "hidden" }}
+                                className="flex items-center justify-between bg-zinc-800/30 hover:bg-zinc-800/60 border border-transparent hover:border-zinc-700/50 rounded-lg px-3 py-2 group transition-all"
                               >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </div>
-                          );
-                        })
+                                <span className="text-xs font-medium text-zinc-300 truncate">
+                                  {player.name}
+                                </span>
+                                <button
+                                  onClick={() => handleRemoveFromGroup(g._id, pid)}
+                                  className="text-zinc-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0 p-1 rounded-md hover:bg-rose-500/10"
+                                  title="Usuń z grupy"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </motion.div>
+                            );
+                          })}
+                        </AnimatePresence>
                       )}
                     </div>
                   </motion.div>
@@ -693,83 +739,97 @@ export default function ManagePhasePage({
 
           {/* ── Matches section ──────────────────────────────── */}
           {matches && matches.length > 0 && (
-            <div className="space-y-4 pt-2">
+            <div className="space-y-5 pt-4">
               {/* Section header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <ListBullets className="w-4 h-4 text-zinc-400" />
-                  <h2 className="text-sm font-semibold text-zinc-300">
-                    Mecze fazy
+              <div className="flex items-center justify-between border-b border-zinc-800/60 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 bg-zinc-800 rounded-md">
+                    <ListBullets className="w-4 h-4 text-zinc-300" />
+                  </div>
+                  <h2 className="text-base font-semibold text-zinc-100">
+                    Mecze w fazie
                   </h2>
-                  <span className="text-xs font-medium bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold bg-blue-500/10 text-blue-400 px-2.5 py-0.5 rounded-full uppercase tracking-wider ml-2">
                     {matches.length} meczów
                   </span>
                 </div>
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={handleClearMatches}
                   disabled={!adminToken}
-                  className="text-xs h-7 border-zinc-700 text-zinc-500 hover:text-rose-400 hover:border-rose-500/50"
+                  className="text-xs h-8 text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10"
                 >
-                  <Trash className="w-3 h-3 mr-1.5" />
+                  <Trash className="w-3.5 h-3.5 mr-1.5" />
                   Wyczyść wszystkie
                 </Button>
               </div>
 
               {/* Rounds */}
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {sortedRounds.map((round) => (
-                  <div key={round} className="space-y-2">
-                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 pl-1">
-                      Kolejka {round}
-                    </h3>
-                    <div className="space-y-1.5">
-                      {matchesByRound[round]?.map((m) => (
-                        <motion.div
-                          key={m._id}
-                          initial={{ opacity: 0, y: 4 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -4 }}
-                          className="flex items-center justify-between bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 group hover:border-zinc-700 transition-colors"
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            {/* Match label badge */}
-                            <span className="text-[10px] font-bold text-zinc-500 bg-zinc-800 px-2 py-0.5 rounded-md shrink-0 font-mono">
-                              {m.matchLabel}
-                            </span>
-                            {/* Players */}
-                            <div className="flex items-center gap-2 text-sm min-w-0">
-                              <span className="font-medium text-zinc-200 truncate">
-                                {playerName(m.player1Id)}
-                              </span>
-                              <ArrowRight className="w-3 h-3 text-zinc-600 shrink-0" />
-                              <span className="font-medium text-zinc-200 truncate">
-                                {playerName(m.player2Id)}
-                              </span>
-                            </div>
-                            {/* Group tag */}
-                            {m.groupId && (
-                              <span className="hidden sm:inline text-[10px] text-zinc-600 bg-zinc-800 px-1.5 py-0.5 rounded shrink-0">
-                                {groupName(m.groupId)}
-                              </span>
-                            )}
-                            {/* Time tag */}
-                            {m.scheduledTime && (
-                              <span className="hidden sm:inline text-[10px] text-zinc-500 shrink-0">
-                                {m.scheduledTime}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => handleDeleteMatch(m._id)}
-                            className="text-zinc-600 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all shrink-0 ml-2"
-                            title="Usuń mecz"
+                  <div key={round} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                        Kolejka {round}
+                      </h3>
+                      <div className="flex-1 h-px bg-zinc-800/50" />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      <AnimatePresence initial={false}>
+                        {matchesByRound[round]?.map((m, idx) => (
+                          <motion.div
+                            key={m._id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.96 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.96 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30, delay: idx * 0.02 }}
+                            className="flex items-center justify-between bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-3 group hover:border-zinc-700 hover:bg-zinc-900 transition-all shadow-sm"
                           >
-                            <Trash className="w-3.5 h-3.5" />
-                          </button>
-                        </motion.div>
-                      ))}
+                            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                              {/* Match label badge */}
+                              <span className="text-[10px] font-bold text-zinc-400 bg-zinc-950 border border-zinc-800 px-2 py-1 rounded-md shrink-0 font-mono w-10 text-center">
+                                {m.matchLabel}
+                              </span>
+                              
+                              {/* Players */}
+                              <div className="flex items-center gap-2 text-sm min-w-0 flex-1">
+                                <span className="font-medium text-zinc-200 truncate text-right flex-1">
+                                  {playerName(m.player1Id)}
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-600 mx-1">VS</span>
+                                <span className="font-medium text-zinc-200 truncate flex-1">
+                                  {playerName(m.player2Id)}
+                                </span>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 pl-3 shrink-0">
+                              <div className="flex flex-col items-end gap-1">
+                                {m.groupId && (
+                                  <span className="hidden sm:inline text-[9px] font-medium text-zinc-500 bg-zinc-800/50 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                    {groupName(m.groupId)}
+                                  </span>
+                                )}
+                                {m.scheduledTime && (
+                                  <span className="hidden sm:flex items-center gap-1 text-[10px] text-zinc-400">
+                                    <Clock className="w-3 h-3" />
+                                    {m.scheduledTime}
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => handleDeleteMatch(m._id)}
+                                className="text-zinc-600 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all p-1.5 rounded-md hover:bg-rose-500/10"
+                                title="Usuń mecz"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
                     </div>
                   </div>
                 ))}
@@ -779,11 +839,13 @@ export default function ManagePhasePage({
 
           {/* Empty state for matches when groups exist but no matches */}
           {matches && matches.length === 0 && groups.length > 0 && (
-            <div className="border border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center py-10 text-zinc-600 gap-2">
-              <SoccerBall className="w-8 h-8" />
-              <p className="text-sm">Brak meczów</p>
-              <p className="text-xs text-center max-w-xs">
-                Kliknij „Generuj każdy z każdym" lub dodaj mecze ręcznie.
+            <div className="border border-dashed border-zinc-800/60 bg-zinc-900/20 rounded-2xl flex flex-col items-center justify-center py-12 text-zinc-500 gap-3 mt-6">
+              <div className="p-4 bg-zinc-800/30 rounded-full">
+                <SoccerBall className="w-8 h-8" />
+              </div>
+              <p className="text-sm font-medium text-zinc-300">Brak meczów</p>
+              <p className="text-xs text-center max-w-sm">
+                Kliknij „Każdy z każdym", aby automatycznie wygenerować pary na podstawie grup, lub użyj „Dodaj mecz", by stworzyć je ręcznie.
               </p>
             </div>
           )}
@@ -794,3 +856,4 @@ export default function ManagePhasePage({
 }
 
 export const runtime = "edge";
+

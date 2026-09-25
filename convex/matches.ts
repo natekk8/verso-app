@@ -196,7 +196,7 @@ export const updateResult = mutation({
     await ctx.db.patch(id, patch);
 
     // Propagate winner to the next bracket match if applicable
-    if (match.nextMatchId && winnerId !== null) {
+    if (match.nextMatchId) {
       const nextMatch = await ctx.db.get(match.nextMatchId);
       if (nextMatch) {
         if (match.nextMatchSlot === 1) {
@@ -261,11 +261,18 @@ export const clearResult = mutation({
       throw new Error('Nieprawidłowy token administratora.');
     }
 
+    // Revert next match if applicable
+    if (match.nextMatchId && match.nextMatchSlot) {
+      const patch = match.nextMatchSlot === 1 ? { player1Id: null } : { player2Id: null };
+      await ctx.db.patch(match.nextMatchId, patch);
+    }
+
     await ctx.db.patch(id, {
       player1Score: undefined,
       player2Score: undefined,
       player1Sets: undefined,
       player2Sets: undefined,
+      setsDetails: undefined,
       winnerId: undefined,
       status: 'pending',
     });

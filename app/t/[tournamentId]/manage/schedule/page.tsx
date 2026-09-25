@@ -80,7 +80,7 @@ export default function SchedulePage({
                       <div 
                         key={m._id} 
                         onClick={() => setSelectedMatch(m)}
-                        className="bg-card border border-border/50 rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:border-blue-500/50 transition-colors"
+                        className="bg-zinc-900/40 border border-zinc-800/40 rounded-xl p-4 flex flex-col gap-3 cursor-pointer hover:bg-zinc-800 hover:border-zinc-700 transition-all"
                       >
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-zinc-500 font-medium">Mecz {m.matchNumber}</span>

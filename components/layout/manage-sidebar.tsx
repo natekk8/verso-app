@@ -51,16 +51,11 @@ export function ManageSidebar({ tournamentId }: ManageSidebarProps) {
         {/* Top: logo + tournament name */}
         <div className="px-5 pt-6 pb-5 border-b border-zinc-800/60 flex flex-col gap-3">
           {/* Brand mark */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-600 shadow-[0_0_14px_rgba(59,130,246,0.45)]">
-              <span className="text-white font-black text-sm tracking-tighter leading-none select-none">
-                V
-              </span>
-            </div>
-            <span className="font-bold tracking-[0.18em] text-xs text-zinc-100 uppercase">
-              Verso
+          <Link href="/" className="flex items-center group mb-1">
+            <span className="font-black text-[22px] tracking-tighter text-zinc-100 uppercase group-hover:text-blue-400 transition-colors">
+              VERSO
             </span>
-          </div>
+          </Link>
 
           {/* Tournament name */}
           <div className="flex flex-col gap-0.5 pl-0.5">

@@ -521,8 +521,10 @@ export default function ManagePhasePage({
                         setManualForm((f) => ({ ...f, player1Id: v || "" }))
                       }
                     >
-                      <SelectTrigger className="w-full h-9 bg-zinc-950 border-zinc-800">
-                        <SelectValue placeholder="Wybierz zawodnika" />
+                      <SelectTrigger className="w-full h-9 bg-zinc-950 border-zinc-800/60 shadow-sm">
+                        <SelectValue placeholder="Wybierz zawodnika">
+                          {allPlayers?.find(p => p._id === manualForm.player1Id)?.name}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="max-h-[250px]">
                         {allPlayers?.map((p) => (
@@ -550,8 +552,10 @@ export default function ManagePhasePage({
                         setManualForm((f) => ({ ...f, player2Id: v || "" }))
                       }
                     >
-                      <SelectTrigger className="w-full h-9 bg-zinc-950 border-zinc-800">
-                        <SelectValue placeholder="Wybierz zawodnika" />
+                      <SelectTrigger className="w-full h-9 bg-zinc-950 border-zinc-800/60 shadow-sm">
+                        <SelectValue placeholder="Wybierz zawodnika">
+                          {allPlayers?.find(p => p._id === manualForm.player2Id)?.name}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent className="max-h-[250px]">
                         {allPlayers

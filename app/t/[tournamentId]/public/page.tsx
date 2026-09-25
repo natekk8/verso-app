@@ -202,10 +202,10 @@ export default function PublicTournamentPage({
                     </h2>
                   </div>
                   
-                  <div className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-800/80 rounded-3xl overflow-hidden shadow-2xl">
+                  <div className="bg-zinc-900/10 border border-zinc-800/40 rounded-2xl overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm text-left">
-                        <thead className="text-[11px] font-bold uppercase tracking-wider bg-zinc-950/50 text-zinc-500 border-b border-zinc-800/80">
+                        <thead className="text-[11px] font-bold uppercase tracking-wider bg-zinc-900/20 text-zinc-500 border-b border-zinc-800/40">
                           <tr>
                             <th className="px-5 py-4 w-12 text-center">#</th>
                             <th className="px-5 py-4">Uczestnik</th>
@@ -224,16 +224,7 @@ export default function PublicTournamentPage({
                                 {i + 1}
                               </td>
                               <td className="px-5 py-4 font-medium text-zinc-200">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-zinc-800 border border-zinc-700/50 shrink-0">
-                                    <img 
-                                      src={`https://api.dicebear.com/9.x/micah/svg?seed=${encodeURIComponent(row.playerName)}&backgroundColor=27272a`} 
-                                      alt="" 
-                                      className="w-full h-full object-cover" 
-                                    />
-                                  </div>
-                                  <span className="truncate">{row.playerName}</span>
-                                </div>
+                                <span className="truncate block font-semibold">{row.playerName}</span>
                               </td>
                               <td className="px-4 py-4 text-center text-zinc-400 font-mono">{row.played}</td>
                               <td className="px-4 py-4 text-center text-emerald-400/90 font-mono">{row.won}</td>
@@ -270,9 +261,8 @@ export default function PublicTournamentPage({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3, type: "spring" }}
-              className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-800/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+              className="bg-zinc-900/10 border border-zinc-800/40 rounded-2xl p-6 relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
               
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2.5 text-zinc-100">
                 <Clock weight="duotone" className="w-6 h-6 text-emerald-500" />
@@ -321,9 +311,8 @@ export default function PublicTournamentPage({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, type: "spring" }}
-              className="bg-zinc-900/40 backdrop-blur-sm border border-zinc-800/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+              className="bg-zinc-900/10 border border-zinc-800/40 rounded-2xl p-6 relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
               
               <h3 className="text-lg font-bold mb-6 flex items-center gap-2.5 text-zinc-100">
                 <CalendarBlank weight="duotone" className="w-6 h-6 text-blue-500" />

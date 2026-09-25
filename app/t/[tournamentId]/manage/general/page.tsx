@@ -194,13 +194,15 @@ export default function GeneralSettingsPage({
   }, [tournamentId]);
 
   // ─── Sync state with DB ───────────────────────────────────────
+  const [initialized, setInitialized] = useState(false);
   useEffect(() => {
-    if (tournament) {
+    if (tournament && !initialized) {
       setName(tournament.name);
       setSlug(tournament.slug ?? "");
       setDescription(tournament.description ?? "");
+      setInitialized(true);
     }
-  }, [tournament]);
+  }, [tournament, initialized]);
 
   // ─── Handlers ─────────────────────────────────────────────────
 

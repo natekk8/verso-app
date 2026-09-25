@@ -273,6 +273,31 @@ export const remove = mutation({
     if (tournament.adminToken !== adminToken)
       throw new Error("Nieprawidłowy token administratora.");
 
+    // Remove player from any groups
+    const groups = await ctx.db.query("groups")
+      .withIndex("by_tournament", q => q.eq("tournamentId", player.tournamentId))
+      .collect();
+    for (const group of groups) {
+      if (group.playerIds.includes(playerId)) {
+        await ctx.db.patch(group._id, {
+          playerIds: group.playerIds.filter(id => id !== playerId)
+        });
+      }
+    }
+
+    // Clean up matches
+    const matches = await ctx.db.query("matches")
+      .withIndex("by_tournament", q => q.eq("tournamentId", player.tournamentId))
+      .collect();
+    for (const match of matches) {
+      if (match.player1Id === playerId) {
+        await ctx.db.patch(match._id, { player1Id: null });
+      }
+      if (match.player2Id === playerId) {
+        await ctx.db.patch(match._id, { player2Id: null });
+      }
+    }
+
     await ctx.db.delete(playerId);
     return { success: true };
   },

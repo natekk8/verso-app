@@ -78,7 +78,7 @@ export default defineSchema({
     playerIds: v.array(v.id("players")),
     color: v.optional(v.string()),
     order: v.optional(v.number()),
-    createdAt: v.number(),
+    createdAt: v.optional(v.number()),
   }).index("by_tournament", ["tournamentId"]),
 
   // ─── Players ──────────────────────────────────────────────────

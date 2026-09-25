@@ -6,7 +6,7 @@ import { Id } from "@/convex/_generated/dataModel";
 import { use, useEffect, useState } from "react";
 import { getAdminToken } from "@/lib/auth";
 import { motion, AnimatePresence } from "motion/react";
-import { SoccerBall, Clock, Trophy, MapPin } from "@phosphor-icons/react";
+import { SoccerBall, Clock, Trophy, MapPin, MagnifyingGlassPlus, MagnifyingGlassMinus } from "@phosphor-icons/react";
 import { calculateStandings } from "@/lib/tournament-logic";
 
 export default function PresentationPage({
@@ -16,6 +16,11 @@ export default function PresentationPage({
 }) {
   const { tournamentId } = use(params);
   const [adminToken, setAdminToken] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
+
+  const handleZoomIn = () => setZoom(z => Math.min(z + 0.1, 2));
+  const handleZoomOut = () => setZoom(z => Math.max(z - 0.1, 0.5));
+  const handleZoomReset = () => setZoom(1);
 
   useEffect(() => {
     setAdminToken(getAdminToken(tournamentId));
@@ -128,6 +133,7 @@ export default function PresentationPage({
 
       {/* Main Content Area */}
       <main className="flex-1 relative p-16 overflow-hidden flex flex-col justify-center z-10">
+        <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top center', transition: 'transform 0.2s ease-out' }} className="w-full h-full">
         <AnimatePresence mode="wait">
           
           {currentView === "live" && (
@@ -306,7 +312,22 @@ export default function PresentationPage({
           )}
 
         </AnimatePresence>
+        </div>
       </main>
+
+      {/* Floating Presentation Control Bar */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 p-2 rounded-full shadow-2xl z-50">
+        <button onClick={handleZoomOut} className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-full transition-colors" title="Oddal (Zoom Out)">
+          <MagnifyingGlassMinus weight="bold" className="w-5 h-5" />
+        </button>
+        <button onClick={handleZoomReset} className="px-3 text-xs font-mono font-bold text-zinc-300 hover:text-zinc-100 transition-colors" title="Zresetuj przybliżenie">
+          {Math.round(zoom * 100)}%
+        </button>
+        <button onClick={handleZoomIn} className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-full transition-colors" title="Przybliż (Zoom In)">
+          <MagnifyingGlassPlus weight="bold" className="w-5 h-5" />
+        </button>
+      </div>
+
     </div>
   );
 }

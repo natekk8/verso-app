@@ -361,3 +361,119 @@ export const createSingle = mutation({
     return id;
   },
 });
+
+/** Rozpoczyna mecz (zmienia status na in_progress) */
+export const startMatch = mutation({
+  args: {
+    id: v.id('matches'),
+    adminToken: v.string(),
+  },
+  handler: async (ctx, { id, adminToken }) => {
+    const match = await ctx.db.get(id);
+    if (!match) throw new Error('Mecz nie istnieje.');
+
+    const tournament = await ctx.db.get(match.tournamentId);
+    if (!tournament || tournament.adminToken !== adminToken) {
+      throw new Error('Nieprawidłowy token administratora.');
+    }
+
+    await ctx.db.patch(id, { status: 'in_progress' });
+    return id;
+  },
+});
+
+/** Aktualizuje wynik na żywo (live score), w tym punkty w konkretnym secie */
+export const updateLiveScore = mutation({
+  args: {
+    id: v.id('matches'),
+    adminToken: v.string(),
+    player1Score: v.optional(v.number()),
+    player2Score: v.optional(v.number()),
+    player1Sets: v.optional(v.number()),
+    player2Sets: v.optional(v.number()),
+    currentSetIndex: v.optional(v.number()),
+    setPlayer1Score: v.optional(v.number()),
+    setPlayer2Score: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const {
+      id, adminToken, player1Score, player2Score,
+      player1Sets, player2Sets, currentSetIndex,
+      setPlayer1Score, setPlayer2Score
+    } = args;
+    
+    const match = await ctx.db.get(id);
+    if (!match) throw new Error('Mecz nie istnieje.');
+
+    const tournament = await ctx.db.get(match.tournamentId);
+    if (!tournament || tournament.adminToken !== adminToken) {
+      throw new Error('Nieprawidłowy token administratora.');
+    }
+
+    const patch: Record<string, unknown> = {
+      status: 'in_progress',
+    };
+
+    if (player1Score !== undefined) patch.player1Score = player1Score;
+    if (player2Score !== undefined) patch.player2Score = player2Score;
+    if (player1Sets !== undefined) patch.player1Sets = player1Sets;
+    if (player2Sets !== undefined) patch.player2Sets = player2Sets;
+
+    if (currentSetIndex !== undefined && setPlayer1Score !== undefined && setPlayer2Score !== undefined) {
+      const setsDetails = match.setsDetails ? [...match.setsDetails] : [];
+      while (setsDetails.length <= currentSetIndex) {
+        setsDetails.push({ p1: 0, p2: 0 });
+      }
+      setsDetails[currentSetIndex] = { p1: setPlayer1Score, p2: setPlayer2Score };
+      patch.setsDetails = setsDetails;
+    }
+
+    await ctx.db.patch(id, patch);
+    return id;
+  },
+});
+
+/** Zakończenie meczu (ustala winnera i pcha go dalej w drabince) */
+export const endMatch = mutation({
+  args: {
+    id: v.id('matches'),
+    adminToken: v.string(),
+  },
+  handler: async (ctx, { id, adminToken }) => {
+    const match = await ctx.db.get(id);
+    if (!match) throw new Error('Mecz nie istnieje.');
+
+    const tournament = await ctx.db.get(match.tournamentId);
+    if (!tournament || tournament.adminToken !== adminToken) {
+      throw new Error('Nieprawidłowy token administratora.');
+    }
+
+    const player1Score = match.player1Score ?? 0;
+    const player2Score = match.player2Score ?? 0;
+
+    const winnerId =
+      player1Score > player2Score
+        ? (match.player1Id ?? null)
+        : player2Score > player1Score
+          ? (match.player2Id ?? null)
+          : null;
+
+    await ctx.db.patch(id, {
+      status: 'finished',
+      winnerId,
+    });
+
+    if (match.nextMatchId) {
+      const nextMatch = await ctx.db.get(match.nextMatchId);
+      if (nextMatch) {
+        if (match.nextMatchSlot === 1) {
+          await ctx.db.patch(match.nextMatchId, { player1Id: winnerId });
+        } else if (match.nextMatchSlot === 2) {
+          await ctx.db.patch(match.nextMatchId, { player2Id: winnerId });
+        }
+      }
+    }
+
+    return id;
+  },
+});

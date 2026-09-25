@@ -7,15 +7,15 @@ import { getAdminToken } from "@/lib/auth";
 import { use, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Trophy, Check, X, Plus } from "@phosphor-icons/react";
+import { Trophy, Check, X, Plus, Minus, PlayCircle, StopCircle } from "@phosphor-icons/react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 export default function ResultsPage({
   params,
@@ -35,101 +35,164 @@ export default function ResultsPage({
   const players = useQuery(api.players.getByTournament, {
     tournamentId: tournamentId as Id<"tournaments">,
   });
-
-  const updateResult = useMutation(api.matches.updateResult);
-  const clearResult = useMutation(api.matches.clearResult);
+  const phases = useQuery(api.phases.getByTournament, {
+    tournamentId: tournamentId as Id<"tournaments">,
+  });
 
   const [selectedMatch, setSelectedMatch] = useState<any | null>(null);
 
-  if (matches === undefined || players === undefined) {
-    return <div className="p-8 text-zinc-500">Wczytywanie meczów...</div>;
+  if (matches === undefined || players === undefined || phases === undefined) {
+    return (
+      <div className="p-8 max-w-5xl mx-auto space-y-8 animate-pulse">
+        <div className="h-10 bg-zinc-900 rounded w-1/3"></div>
+        <div className="h-32 bg-zinc-900 rounded"></div>
+      </div>
+    );
   }
 
-  // Filter out BYE matches (where one player is null) if we don't want to score them.
-  // Actually, BYEs can just be ignored in results.
   const playableMatches = matches.filter(m => m.player1Id && m.player2Id);
 
+  // Group by phase and then by round
+  const grouped: Record<string, Record<number, typeof playableMatches>> = {};
+  playableMatches.forEach(m => {
+    if (!grouped[m.phaseId]) grouped[m.phaseId] = {};
+    if (!grouped[m.phaseId][m.round]) grouped[m.phaseId][m.round] = [];
+    grouped[m.phaseId][m.round].push(m);
+  });
+
+  // Sort phases by order
+  const sortedPhases = phases.sort((a, b) => a.order - b.order);
+
   return (
-    <div className="p-8 max-w-5xl mx-auto space-y-8">
+    <div className="p-8 max-w-5xl mx-auto space-y-12">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Wyniki na żywo</h1>
-        <p className="text-muted-foreground mt-2">
-          Wprowadzaj wyniki meczów. Zmiany są od razu widoczne na ekranach graczy i kibiców.
+        <p className="text-muted-foreground mt-2 max-w-2xl text-lg">
+          Zarządzaj wynikami meczów. Transmituj punkty set po secie bezpośrednio na ekran publiczny.
         </p>
       </div>
 
-      <div className="grid gap-4">
-        {playableMatches.length === 0 ? (
-          <div className="p-8 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-2xl">
-            Brak meczów do rozegrania. Przejdź do zakładki "Podział", aby wygenerować mecze.
-          </div>
-        ) : (
-          playableMatches.map((m) => {
-            const p1 = players.find((p) => p._id === m.player1Id);
-            const p2 = players.find((p) => p._id === m.player2Id);
-            const isFinished = m.status === "finished";
+      {playableMatches.length === 0 ? (
+        <div className="p-12 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-3xl bg-zinc-900/20">
+          <Trophy className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-medium text-zinc-300 mb-2">Brak meczów do rozegrania</h3>
+          <p>Przejdź do zakładki "Podział", aby wygenerować mecze i harmonogram.</p>
+        </div>
+      ) : (
+        <div className="space-y-16">
+          {sortedPhases.map(phase => {
+            const rounds = grouped[phase._id];
+            if (!rounds) return null;
 
             return (
-              <motion.div
-                key={m._id}
-                layout
-                onClick={() => setSelectedMatch(m)}
-                className={`flex items-center justify-between p-5 rounded-2xl border cursor-pointer transition-all hover:scale-[1.01] active:scale-100 ${
-                  isFinished
-                    ? "bg-zinc-900/50 border-zinc-800"
-                    : "bg-card border-border/50 hover:border-blue-500/50 hover:bg-blue-500/5"
-                }`}
-              >
-                <div className="flex-1 flex flex-col md:flex-row items-center gap-4">
-                  <div className="w-full md:w-1/3 flex items-center justify-end gap-3 text-right">
-                    <span className={`font-semibold ${isFinished && m.winnerId === p1?._id ? "text-emerald-400" : "text-zinc-100"}`}>
-                      {p1?.name || "Brak"}
-                    </span>
-                    <img
-                      src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(p1?.name || "")}&backgroundColor=2563eb,3b82f6`}
-                      className="w-10 h-10 rounded-xl"
-                    />
-                  </div>
-
-                  <div className="px-6 py-2 rounded-xl bg-zinc-950 border border-zinc-800 font-mono font-bold text-xl min-w-[100px] text-center">
-                    {isFinished ? `${m.player1Score} : ${m.player2Score}` : "VS"}
-                  </div>
-
-                  <div className="w-full md:w-1/3 flex items-center gap-3">
-                    <img
-                      src={`https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(p2?.name || "")}&backgroundColor=2563eb,3b82f6`}
-                      className="w-10 h-10 rounded-xl"
-                    />
-                    <span className={`font-semibold ${isFinished && m.winnerId === p2?._id ? "text-emerald-400" : "text-zinc-100"}`}>
-                      {p2?.name || "Brak"}
-                    </span>
-                  </div>
+              <section key={phase._id} className="space-y-8">
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-bold text-zinc-100">{phase.name}</h2>
+                  <div className="h-px bg-zinc-800 flex-1"></div>
                 </div>
-                
-                {isFinished && m.setsDetails && m.setsDetails.length > 0 && (
-                  <div className="hidden md:flex gap-2 ml-4 text-xs font-mono text-zinc-500">
-                    {m.setsDetails.map((set: any, i: number) => (
-                      <span key={i} className="bg-zinc-950 px-2 py-1 rounded-md border border-zinc-800">
-                        {set.p1}:{set.p2}
-                      </span>
+
+                <div className="space-y-12">
+                  {Object.entries(rounds)
+                    .sort(([a], [b]) => Number(a) - Number(b))
+                    .map(([roundNum, roundMatches]) => (
+                      <div key={roundNum} className="space-y-4">
+                        <h3 className="text-sm font-semibold tracking-widest text-zinc-500 uppercase">
+                          Kolejka {roundNum}
+                        </h3>
+                        <div className="grid gap-3">
+                          {roundMatches.map(m => {
+                            const p1 = players.find(p => p._id === m.player1Id);
+                            const p2 = players.find(p => p._id === m.player2Id);
+                            const isLive = m.status === "in_progress";
+                            const isFinished = m.status === "finished";
+
+                            return (
+                              <motion.button
+                                key={m._id}
+                                layout
+                                onClick={() => setSelectedMatch(m)}
+                                className={cn(
+                                  "w-full flex flex-col md:flex-row items-center justify-between p-4 rounded-2xl border text-left transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]",
+                                  isLive 
+                                    ? "bg-blue-500/5 border-blue-500/30 ring-1 ring-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.1)]" 
+                                    : isFinished
+                                      ? "bg-zinc-900/40 border-zinc-800/80"
+                                      : "bg-zinc-950 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50"
+                                )}
+                              >
+                                <div className="flex-1 flex flex-col md:flex-row items-center w-full gap-4 md:gap-6">
+                                  {/* P1 */}
+                                  <div className="w-full md:w-2/5 flex items-center justify-end gap-3 text-right">
+                                    <span className={cn(
+                                      "font-semibold text-lg truncate", 
+                                      isFinished && m.winnerId === p1?._id ? "text-white" : isFinished ? "text-zinc-500" : "text-zinc-200"
+                                    )}>
+                                      {p1?.name || "Brak"}
+                                    </span>
+                                  </div>
+
+                                  {/* Score Box */}
+                                  <div className={cn(
+                                    "px-6 py-2 rounded-xl border font-mono font-bold text-xl min-w-[120px] text-center flex-shrink-0 flex flex-col items-center justify-center gap-1",
+                                    isLive ? "bg-blue-500 text-white border-blue-400 shadow-[0_0_20px_rgba(59,130,246,0.3)]" : 
+                                    isFinished ? "bg-zinc-900 border-zinc-800 text-zinc-300" : "bg-zinc-950 border-zinc-800 text-zinc-500"
+                                  )}>
+                                    {(isFinished || isLive) ? (
+                                      <span>{m.player1Score || 0} : {m.player2Score || 0}</span>
+                                    ) : (
+                                      <span className="text-sm uppercase tracking-widest text-zinc-600">VS</span>
+                                    )}
+                                    {isLive && (
+                                      <span className="text-[9px] uppercase tracking-widest flex items-center gap-1 opacity-90">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Live
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {/* P2 */}
+                                  <div className="w-full md:w-2/5 flex items-center gap-3">
+                                    <span className={cn(
+                                      "font-semibold text-lg truncate", 
+                                      isFinished && m.winnerId === p2?._id ? "text-white" : isFinished ? "text-zinc-500" : "text-zinc-200"
+                                    )}>
+                                      {p2?.name || "Brak"}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                {/* Sets breakdown */}
+                                {(isFinished || isLive) && m.setsDetails && m.setsDetails.length > 0 && (
+                                  <div className="mt-4 md:mt-0 md:ml-6 flex gap-2 overflow-x-auto pb-1 md:pb-0 hide-scrollbar max-w-full">
+                                    {m.setsDetails.map((set: any, i: number) => (
+                                      <div key={i} className={cn(
+                                        "px-2 py-1 rounded-md text-xs font-mono font-medium whitespace-nowrap",
+                                        isLive ? "bg-blue-500/20 text-blue-200 border border-blue-500/30" : "bg-zinc-800/50 text-zinc-400 border border-zinc-800"
+                                      )}>
+                                        S{i+1} {set.p1}:{set.p2}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </motion.button>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
-                  </div>
-                )}
-              </motion.div>
+                </div>
+              </section>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       <AnimatePresence>
         {selectedMatch && (
-          <MatchScoreModal
+          <LiveMatchModal
             match={selectedMatch}
             players={players}
             adminToken={adminToken}
             onClose={() => setSelectedMatch(null)}
-            updateResult={updateResult}
-            clearResult={clearResult}
           />
         )}
       </AnimatePresence>
@@ -137,190 +200,203 @@ export default function ResultsPage({
   );
 }
 
-function MatchScoreModal({ match, players, adminToken, onClose, updateResult, clearResult }: any) {
+function LiveMatchModal({ match, players, adminToken, onClose }: any) {
   const p1 = players.find((p: any) => p._id === match.player1Id);
   const p2 = players.find((p: any) => p._id === match.player2Id);
 
-  const [mode, setMode] = useState<"standard" | "sets">(match.setsDetails?.length > 0 ? "sets" : "standard");
+  const startMatch = useMutation(api.matches.startMatch);
+  const endMatch = useMutation(api.matches.endMatch);
+  const updateLiveScore = useMutation(api.matches.updateLiveScore);
+  const clearResult = useMutation(api.matches.clearResult);
+
+  const isLive = match.status === "in_progress";
+  const isFinished = match.status === "finished";
+
+  // Use local state for immediate feedback, but sync with match prop
+  const [localSets, setLocalSets] = useState<{p1: number, p2: number}[]>(match.setsDetails || []);
   
-  // Standard mode
-  const [s1, setS1] = useState(match.player1Score?.toString() || "");
-  const [s2, setS2] = useState(match.player2Score?.toString() || "");
+  useEffect(() => {
+    setLocalSets(match.setsDetails || []);
+  }, [match.setsDetails]);
 
-  // Sets mode
-  const [sets, setSets] = useState<{p1: string; p2: string}[]>(
-    match.setsDetails && match.setsDetails.length > 0
-      ? match.setsDetails.map((s: any) => ({ p1: s.p1.toString(), p2: s.p2.toString() }))
-      : [{ p1: "", p2: "" }]
-  );
+  const p1SetsWon = localSets.filter(s => s.p1 > s.p2).length;
+  const p2SetsWon = localSets.filter(s => s.p2 > s.p1).length;
 
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    if (!adminToken) return toast.error("Brak uprawnień admina.");
-    setSaving(true);
-
-    try {
-      if (mode === "standard") {
-        const score1 = parseInt(s1);
-        const score2 = parseInt(s2);
-        if (isNaN(score1) || isNaN(score2)) {
-          toast.error("Wprowadź poprawne punkty.");
-          return;
-        }
-        await updateResult({
-          id: match._id,
-          adminToken,
-          player1Score: score1,
-          player2Score: score2,
-        });
-      } else {
-        // Sets mode logic
-        let p1SetsWon = 0;
-        let p2SetsWon = 0;
-        const parsedSets = sets.filter(s => s.p1 !== "" && s.p2 !== "").map(s => {
-          const p1Score = parseInt(s.p1) || 0;
-          const p2Score = parseInt(s.p2) || 0;
-          if (p1Score > p2Score) p1SetsWon++;
-          else if (p2Score > p1Score) p2SetsWon++;
-          return { p1: p1Score, p2: p2Score };
-        });
-
-        if (parsedSets.length === 0) {
-          toast.error("Wprowadź przynajmniej jeden set.");
-          return;
-        }
-
-        // We save the sets won as the primary score, so 2-1 or 2-0 is the main score.
-        await updateResult({
-          id: match._id,
-          adminToken,
-          player1Score: p1SetsWon,
-          player2Score: p2SetsWon,
-          setsDetails: parsedSets
-        });
-      }
-      toast.success("Wynik zapisany na żywo!");
-      onClose();
-    } catch (e) {
-      toast.error("Błąd zapisu.");
-    } finally {
-      setSaving(false);
+  const handleStartLive = async () => {
+    if (!adminToken) return;
+    if (localSets.length === 0) {
+      setLocalSets([{ p1: 0, p2: 0 }]); // Add first set automatically
+      await updateLiveScore({ id: match._id, adminToken, setIndex: 0, p1Score: 0, p2Score: 0 });
     }
+    await startMatch({ id: match._id, adminToken });
   };
 
-  const handleClear = async () => {
+  const handleEndMatch = async () => {
     if (!adminToken) return;
-    setSaving(true);
-    await clearResult({ id: match._id, adminToken });
-    toast.success("Wynik zresetowany");
-    onClose();
+    await endMatch({ id: match._id, adminToken });
+  };
+
+  const updateSetPoint = async (setIndex: number, player: 1 | 2, delta: number) => {
+    if (!adminToken) return;
+    const newSets = [...localSets];
+    if (!newSets[setIndex]) newSets[setIndex] = { p1: 0, p2: 0 };
+    
+    if (player === 1) newSets[setIndex].p1 = Math.max(0, newSets[setIndex].p1 + delta);
+    else newSets[setIndex].p2 = Math.max(0, newSets[setIndex].p2 + delta);
+    
+    setLocalSets(newSets);
+    await updateLiveScore({ 
+      id: match._id, 
+      adminToken, 
+      setIndex, 
+      p1Score: newSets[setIndex].p1, 
+      p2Score: newSets[setIndex].p2 
+    });
+  };
+
+  const addSet = async () => {
+    if (!adminToken) return;
+    const newIndex = localSets.length;
+    const newSets = [...localSets, { p1: 0, p2: 0 }];
+    setLocalSets(newSets);
+    await updateLiveScore({ id: match._id, adminToken, setIndex: newIndex, p1Score: 0, p2Score: 0 });
   };
 
   return (
     <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md bg-zinc-950 border-zinc-800 p-0 overflow-hidden">
-        <div className="bg-zinc-900 px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
-          <h2 className="font-semibold text-lg">Wprowadź wynik</h2>
-          <Button variant="ghost" size="sm" onClick={onClose} className="text-zinc-400 hover:text-white p-0 h-auto">
+      <DialogContent className="max-w-2xl bg-zinc-950 border-zinc-800 p-0 overflow-hidden shadow-2xl">
+        <div className={cn(
+          "px-6 py-4 flex items-center justify-between border-b transition-colors",
+          isLive ? "bg-blue-600 border-blue-500" : "bg-zinc-900 border-zinc-800"
+        )}>
+          <div className="flex items-center gap-3">
+            {isLive ? (
+              <span className="flex items-center gap-2 text-white font-bold tracking-wide">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                </span>
+                LIVE
+              </span>
+            ) : (
+              <h2 className="font-semibold text-lg text-zinc-100">Zarządzanie meczem</h2>
+            )}
+          </div>
+          <Button variant="ghost" size="icon" onClick={onClose} className={cn(
+            "p-0 h-auto hover:bg-transparent",
+            isLive ? "text-blue-200 hover:text-white" : "text-zinc-400 hover:text-white"
+          )}>
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        <div className="p-6 space-y-6">
-          {/* Mode switch */}
-          <div className="flex bg-zinc-900 rounded-lg p-1 w-full border border-zinc-800">
-            <button
-              onClick={() => setMode("standard")}
-              className={`flex-1 text-sm py-2 rounded-md transition-colors ${mode === "standard" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200"}`}
-            >
-              Zwykły wynik
-            </button>
-            <button
-              onClick={() => setMode("sets")}
-              className={`flex-1 text-sm py-2 rounded-md transition-colors ${mode === "sets" ? "bg-zinc-800 text-white shadow-sm" : "text-zinc-400 hover:text-zinc-200"}`}
-            >
-              Punktacja w setach
-            </button>
-          </div>
-
-          <div className="flex justify-between items-center text-center px-4">
-            <div className="flex-1 font-semibold text-zinc-100">{p1?.name}</div>
-            <div className="px-4 text-xs font-medium text-zinc-500 uppercase">VS</div>
-            <div className="flex-1 font-semibold text-zinc-100">{p2?.name}</div>
-          </div>
-
-          {mode === "standard" ? (
-            <div className="flex items-center justify-center gap-6">
-              <Input
-                type="number"
-                value={s1}
-                onChange={(e) => setS1(e.target.value)}
-                className="w-24 h-16 text-center text-2xl font-bold bg-zinc-900 border-zinc-800 focus:border-blue-500"
-                autoFocus
-              />
-              <span className="text-2xl font-bold text-zinc-600">:</span>
-              <Input
-                type="number"
-                value={s2}
-                onChange={(e) => setS2(e.target.value)}
-                className="w-24 h-16 text-center text-2xl font-bold bg-zinc-900 border-zinc-800 focus:border-blue-500"
-              />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sets.map((set, i) => (
-                <div key={i} className="flex items-center justify-center gap-4">
-                  <span className="text-xs text-zinc-500 w-12 text-right">Set {i + 1}</span>
-                  <Input
-                    type="number"
-                    value={set.p1}
-                    onChange={(e) => {
-                      const n = [...sets];
-                      n[i].p1 = e.target.value;
-                      setSets(n);
-                    }}
-                    className="w-16 text-center font-mono bg-zinc-900 border-zinc-800"
-                  />
-                  <span className="text-zinc-600">:</span>
-                  <Input
-                    type="number"
-                    value={set.p2}
-                    onChange={(e) => {
-                      const n = [...sets];
-                      n[i].p2 = e.target.value;
-                      setSets(n);
-                    }}
-                    className="w-16 text-center font-mono bg-zinc-900 border-zinc-800"
-                  />
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="text-zinc-500 hover:text-rose-400"
-                    onClick={() => setSets(sets.filter((_, idx) => idx !== i))}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <div className="flex justify-center pt-2">
-                <Button variant="outline" size="sm" onClick={() => setSets([...sets, { p1: "", p2: "" }])} className="border-zinc-800 text-zinc-400 hover:text-white">
-                  <Plus className="w-4 h-4 mr-2" /> Dodaj set
-                </Button>
+        <div className="p-8">
+          {/* Main Score Board */}
+          <div className="flex justify-between items-stretch gap-6 mb-10">
+            <div className="flex-1 flex flex-col items-center gap-4 overflow-hidden">
+              <span className="text-2xl font-bold text-zinc-100 truncate w-full text-center">{p1?.name}</span>
+              <div className={cn(
+                "w-32 h-32 flex items-center justify-center rounded-3xl text-6xl font-mono font-bold border transition-colors",
+                isLive ? "bg-zinc-900 border-zinc-800 text-white" : "bg-zinc-950 border-zinc-800 text-zinc-500"
+              )}>
+                {isLive || isFinished ? p1SetsWon : (match.player1Score ?? 0)}
               </div>
             </div>
-          )}
+            
+            <div className="flex flex-col items-center justify-center gap-2 text-zinc-600 uppercase font-bold tracking-widest pt-10">
+              VS
+            </div>
 
-          <div className="flex gap-3 pt-4 border-t border-zinc-800/50">
-            {match.status === "finished" && (
-              <Button variant="outline" className="border-rose-500/20 text-rose-500 hover:bg-rose-500/10" onClick={handleClear} disabled={saving}>
-                Resetuj
-              </Button>
-            )}
-            <Button className="flex-1 bg-blue-600 hover:bg-blue-500 text-white" onClick={handleSave} disabled={saving}>
-              {saving ? "Zapisywanie..." : "Zapisz wynik"}
-            </Button>
+            <div className="flex-1 flex flex-col items-center gap-4 overflow-hidden">
+              <span className="text-2xl font-bold text-zinc-100 truncate w-full text-center">{p2?.name}</span>
+              <div className={cn(
+                "w-32 h-32 flex items-center justify-center rounded-3xl text-6xl font-mono font-bold border transition-colors",
+                isLive ? "bg-zinc-900 border-zinc-800 text-white" : "bg-zinc-950 border-zinc-800 text-zinc-500"
+              )}>
+                {isLive || isFinished ? p2SetsWon : (match.player2Score ?? 0)}
+              </div>
+            </div>
           </div>
+
+          {/* Sets Editor */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-semibold tracking-widest text-zinc-500 uppercase">Sety</h3>
+              {adminToken && (isLive || isFinished) && (
+                <Button variant="ghost" size="sm" onClick={addSet} className="text-blue-400 hover:text-blue-300 hover:bg-blue-500/10">
+                  <Plus className="w-4 h-4 mr-2" /> Nowy set
+                </Button>
+              )}
+            </div>
+
+            {localSets.length === 0 ? (
+              <div className="text-center py-6 text-zinc-500 text-sm bg-zinc-900/50 rounded-xl border border-zinc-800">
+                Brak zapisanych setów. Rozpocznij mecz lub dodaj set ręcznie.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {localSets.map((set, i) => (
+                  <div key={i} className="flex items-center justify-between bg-zinc-900 border border-zinc-800 p-3 rounded-2xl transition-all">
+                    {/* P1 Controls */}
+                    <div className="flex items-center gap-3">
+                      {adminToken && (isLive || isFinished) && (
+                        <>
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 1, -1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 1, 1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Set Score */}
+                    <div className="flex items-center gap-4 min-w-[120px] justify-center">
+                      <span className={cn("text-3xl font-mono font-bold transition-colors", set.p1 > set.p2 ? "text-white" : "text-zinc-400")}>{set.p1}</span>
+                      <span className="text-zinc-600 text-sm font-medium">S{i+1}</span>
+                      <span className={cn("text-3xl font-mono font-bold transition-colors", set.p2 > set.p1 ? "text-white" : "text-zinc-400")}>{set.p2}</span>
+                    </div>
+
+                    {/* P2 Controls */}
+                    <div className="flex items-center gap-3">
+                      {adminToken && (isLive || isFinished) && (
+                        <>
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 2, 1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" onClick={() => updateSetPoint(i, 2, -1)} className="w-10 h-10 rounded-full border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white transition-transform active:scale-95">
+                            <Minus className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Action Bar */}
+          {adminToken && (
+            <div className="mt-10 flex gap-4 pt-6 border-t border-zinc-800">
+              {!isLive && !isFinished && (
+                <Button className="flex-1 bg-blue-600 hover:bg-blue-500 text-white h-12 text-base font-semibold transition-transform active:scale-95" onClick={handleStartLive}>
+                  <PlayCircle className="w-5 h-5 mr-2" weight="fill" /> Rozpocznij Live
+                </Button>
+              )}
+              {isLive && (
+                <Button className="flex-1 bg-zinc-100 hover:bg-white text-zinc-950 h-12 text-base font-semibold transition-transform active:scale-95" onClick={handleEndMatch}>
+                  <StopCircle className="w-5 h-5 mr-2" weight="fill" /> Zakończ Mecz
+                </Button>
+              )}
+              {isFinished && (
+                <Button variant="outline" className="flex-1 border-rose-500/20 text-rose-500 hover:bg-rose-500/10 h-12 text-base font-semibold transition-transform active:scale-95" onClick={() => clearResult({ id: match._id, adminToken })}>
+                  Cofnij Zakończenie (Wyczyść)
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -3,7 +3,7 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { use } from "react";
+import { use, useState } from "react";
 import { motion } from "motion/react";
 import { PublicHeader } from "@/components/layout/public-header";
 import { calculateStandings } from "@/lib/tournament-logic";
@@ -17,8 +17,67 @@ import {
   CircleNotch,
   WarningCircle,
   PlayCircle,
-  CheckCircle
+  CheckCircle,
+  MagnifyingGlassPlus,
+  MagnifyingGlassMinus
 } from "@phosphor-icons/react";
+
+const BracketNode = ({ match, allMatches, players }: { match: any, allMatches: any[], players: any[] }) => {
+  const children = allMatches
+    .filter(m => m.nextMatchId === match._id)
+    .sort((a, b) => (a.nextMatchSlot || 1) - (b.nextMatchSlot || 1));
+
+  const p1 = players.find(p => p._id === match.player1Id);
+  const p2 = players.find(p => p._id === match.player2Id);
+  const p1Name = p1?.name ?? "TBD";
+  const p2Name = p2?.name ?? "TBD";
+  
+  const p1Won = (match.player1Score ?? 0) > (match.player2Score ?? 0);
+  const p2Won = (match.player2Score ?? 0) > (match.player1Score ?? 0);
+  const isFinished = match.status === "finished";
+
+  return (
+    <div className="flex items-center">
+      {children.length > 0 && (
+        <div className="flex flex-col relative justify-center">
+          {children.map((child, index) => (
+            <div key={child._id} className="flex items-center relative py-4">
+               <BracketNode match={child} allMatches={allMatches} players={players} />
+               <div className="w-8 h-px bg-zinc-700/60" />
+               {children.length > 1 && index === 0 && (
+                 <div className="absolute right-0 top-1/2 bottom-0 w-px bg-zinc-700/60" />
+               )}
+               {children.length > 1 && index === 1 && (
+                 <div className="absolute right-0 top-0 bottom-1/2 w-px bg-zinc-700/60" />
+               )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {children.length > 0 && (
+        <div className="w-8 h-px bg-zinc-700/60" />
+      )}
+
+      <div className="relative z-10 w-56 bg-zinc-900/60 backdrop-blur-md border border-zinc-800/80 rounded-xl overflow-hidden shadow-xl shadow-black/40 transition-transform hover:scale-[1.02] hover:border-zinc-700 cursor-default">
+        <div className="px-3 py-1.5 bg-zinc-950/50 border-b border-zinc-800/50 flex justify-between items-center text-[10px] uppercase tracking-widest font-semibold text-zinc-500">
+          <span>{match.matchLabel || `Mecz ${match.matchNumber}`}</span>
+          {match.status === "in_progress" && <span className="text-emerald-400 animate-pulse">Live</span>}
+        </div>
+        <div className="flex flex-col">
+          <div className={`flex items-center justify-between px-4 py-2.5 border-b border-zinc-800/30 ${isFinished && p1Won ? 'bg-emerald-500/10' : ''}`}>
+            <span className={`text-sm truncate pr-2 ${isFinished ? (p1Won ? 'font-bold text-emerald-400' : 'text-zinc-500') : 'text-zinc-300'}`}>{p1Name}</span>
+            <span className={`font-mono font-bold ${isFinished ? (p1Won ? 'text-emerald-400' : 'text-zinc-500') : 'text-zinc-600'}`}>{match.player1Score ?? '-'}</span>
+          </div>
+          <div className={`flex items-center justify-between px-4 py-2.5 ${isFinished && p2Won ? 'bg-emerald-500/10' : ''}`}>
+            <span className={`text-sm truncate pr-2 ${isFinished ? (p2Won ? 'font-bold text-emerald-400' : 'text-zinc-500') : 'text-zinc-300'}`}>{p2Name}</span>
+            <span className={`font-mono font-bold ${isFinished ? (p2Won ? 'text-emerald-400' : 'text-zinc-500') : 'text-zinc-600'}`}>{match.player2Score ?? '-'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function PublicTournamentPage({
   params,
@@ -26,6 +85,11 @@ export default function PublicTournamentPage({
   params: Promise<{ tournamentId: string }>;
 }) {
   const { tournamentId } = use(params);
+  const [zoom, setZoom] = useState(1);
+
+  const handleZoomIn = () => setZoom(z => Math.min(z + 0.1, 2));
+  const handleZoomOut = () => setZoom(z => Math.max(z - 0.1, 0.5));
+  const handleZoomReset = () => setZoom(1);
 
   const t = useQuery(api.tournaments.getPublic, {
     id: tournamentId as Id<"tournaments">,
@@ -202,9 +266,22 @@ export default function PublicTournamentPage({
                     </h2>
                   </div>
                   
-                  <div className="bg-zinc-900/10 border border-zinc-800/40 rounded-2xl overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left">
+                  <div className={`bg-zinc-900/10 border border-zinc-800/40 rounded-2xl overflow-hidden ${phase.type === 'bracket' ? 'p-8 min-h-[500px] flex items-center justify-center relative overflow-auto' : ''}`}>
+                    {phase.type === 'bracket' ? (
+                      <div 
+                        style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s ease-out' }}
+                        className="flex items-center justify-center min-w-max"
+                      >
+                        {phaseMatches.filter(m => !m.nextMatchId).map(f => (
+                          <BracketNode key={f._id} match={f} allMatches={phaseMatches} players={players} />
+                        ))}
+                        {phaseMatches.filter(m => !m.nextMatchId).length === 0 && (
+                          <div className="text-zinc-500 font-medium">Brak meczów w drabince</div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
                         <thead className="text-[11px] font-bold uppercase tracking-wider bg-zinc-900/20 text-zinc-500 border-b border-zinc-800/40">
                           <tr>
                             <th className="px-5 py-4 w-12 text-center">#</th>
@@ -249,6 +326,7 @@ export default function PublicTournamentPage({
                         </tbody>
                       </table>
                     </div>
+                    )}
                   </div>
                 </motion.div>
               );
@@ -362,6 +440,19 @@ export default function PublicTournamentPage({
           </div>
         </div>
       </main>
+      
+      {/* Floating Presentation Control Bar */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 p-2 rounded-full shadow-2xl z-50">
+        <button onClick={handleZoomOut} className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-full transition-colors" title="Oddal (Zoom Out)">
+          <MagnifyingGlassMinus weight="bold" className="w-5 h-5" />
+        </button>
+        <button onClick={handleZoomReset} className="px-3 text-xs font-mono font-bold text-zinc-300 hover:text-zinc-100 transition-colors" title="Zresetuj przybliżenie">
+          {Math.round(zoom * 100)}%
+        </button>
+        <button onClick={handleZoomIn} className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 rounded-full transition-colors" title="Przybliż (Zoom In)">
+          <MagnifyingGlassPlus weight="bold" className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   );
 }

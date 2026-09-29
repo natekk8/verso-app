@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-obsidian: #09090b;
+    --border-hairline: rgba(255, 255, 255, 0.1);
+    --border-hairline-subtle: rgba(255, 255, 255, 0.05);
+    --border-hairline-hover: rgba(255, 255, 255, 0.2);
+    --glass-surface: rgba(18, 18, 20, 0.65);
+    --glass-surface-elevated: rgba(24, 24, 27, 0.75);
+  }
+
+  body {
+    background-color: var(--bg-obsidian);
+    color: #f4f4f5;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  /* Double bezel outer shell */
+  .bezel-outer {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  }
+
+  /* Double bezel inner core */
+  .bezel-inner {
+    background: rgba(12, 12, 14, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Tactile press feedback */
+  .tactile-press {
+    transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, border-color 150ms ease;
+  }
+  .tactile-press:active {
+    transform: scale(0.97);
+  }
+
+  /* Hairline borders */
+  .border-hairline {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .border-hairline-subtle {
+    border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .border-hairline-hover:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  /* Glass backdrop */
+  .glass-card {
+    background-color: rgba(18, 18, 20, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .glass-card-elevated {
+    background-color: rgba(24, 24, 27, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Custom minimal scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

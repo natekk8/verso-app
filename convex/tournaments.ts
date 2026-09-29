@@ -255,3 +255,27 @@ export const updateSettings = mutation({
     return { success: true };
   },
 });
+
+// 6. LIST TOURNAMENTS (Public safe overview for Home page)
+export const list = query({
+  args: {},
+  handler: async (ctx: any) => {
+    const tournaments = await ctx.db.query("tournaments").collect();
+    const enriched = await Promise.all(
+      tournaments.map(async (t: any) => {
+        const sportRules = t.sportRulesId ? await ctx.db.get(t.sportRulesId) : null;
+        return {
+          _id: t._id,
+          _creationTime: t._creationTime,
+          name: t.name,
+          slug: t.slug,
+          sportRulesId: t.sportRulesId,
+          sportRules,
+          allowPlayerScoreSubmission: t.allowPlayerScoreSubmission,
+          createdAt: t.createdAt || t._creationTime,
+        };
+      })
+    );
+    return enriched.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
+  },
+});

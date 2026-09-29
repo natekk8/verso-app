@@ -176,7 +176,7 @@ export const SpectatorPortal: React.FC<SpectatorPortalProps> = ({ tournament }) 
   }, [tournament.stages, matches, calculatedStandings]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="w-full max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[2000px] 4xl:max-w-[2500px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-8 space-y-8">
       {/* Hero Header Card */}
       <div className="p-6 sm:p-8 rounded-3xl bg-neutral-900/40 border border-white/10 backdrop-blur-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>

@@ -374,7 +374,7 @@ export const AdminHub: React.FC<AdminHubProps> = ({ tournament, adminSecret: ini
   const checkedInCount = players.filter((p: any) => p.checkedIn).length;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="w-full max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[2000px] 4xl:max-w-[2500px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-8 space-y-8">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 bg-neutral-900 border border-emerald-500/40 text-emerald-300 text-sm px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 backdrop-blur-xl animate-in fade-in slide-in-from-bottom-4">

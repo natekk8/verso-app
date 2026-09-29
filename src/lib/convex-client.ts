@@ -1709,11 +1709,17 @@ const rawConvexUrl =
   (typeof process !== "undefined" ? process.env?.VITE_CONVEX_URL : undefined) ??
   (typeof import.meta !== "undefined" ? (import.meta as any).env?.VITE_CONVEX_URL : undefined);
 
+const isTestEnv =
+  (typeof process !== "undefined" && process.env?.NODE_ENV === "test") ||
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.MODE === "test");
+
 export const IS_REAL_CONVEX = Boolean(
+  !isTestEnv &&
   typeof rawConvexUrl === "string" &&
   rawConvexUrl.trim().length > 0 &&
   rawConvexUrl.startsWith("http")
 );
+
 
 let realConvexClient: ConvexReactClient | null = null;
 if (IS_REAL_CONVEX) {

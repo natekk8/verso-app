@@ -51,27 +51,29 @@ export const Navbar: React.FC<NavbarProps> = ({ tournament }) => {
   const currentRole = route.role || "spectator";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#09090b]/85 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16 gap-4">
+    <header className="sticky top-0 z-40 border-b border-white/[0.08] bg-[#09090b]/85 backdrop-blur-2xl">
+      <div className="w-full max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[2000px] 4xl:max-w-[2500px] mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 flex items-center justify-between h-16 gap-4">
         {/* Brand & Tournament Info */}
         <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="flex items-center gap-2 text-white font-extrabold tracking-widest text-base hover:opacity-80 transition-opacity"
+            className="flex items-center gap-2.5 text-white font-extrabold tracking-widest text-base hover:opacity-80 transition-opacity group"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 group-hover:scale-125 transition-transform" />
             <span>VERSO</span>
           </Link>
 
           <span className="text-neutral-700 hidden sm:inline">/</span>
 
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="font-semibold text-white text-sm truncate max-w-[200px]">
+          <div className="hidden sm:flex items-center gap-2.5">
+            <span className="font-semibold text-white text-sm truncate max-w-[240px] 2xl:max-w-[360px]">
               {tournament.name}
             </span>
-            <Badge variant="neutral" size="sm" className="font-mono text-[10px]">
-              {tournament.sportRules.preset}
-            </Badge>
+            {tournament.sportRules?.preset && (
+              <Badge variant="neutral" size="sm" className="font-mono text-[10px] uppercase">
+                {tournament.sportRules.preset}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -95,10 +97,14 @@ export const Navbar: React.FC<NavbarProps> = ({ tournament }) => {
             onClick={() => {
               const token =
                 tournament.adminSecret ||
-                (typeof window !== "undefined"
-                  ? window.localStorage.getItem(`verso_admin_${slug}`) || "admin"
-                  : "admin");
-              navigate(`/${slug}/admin/${token}`);
+                (typeof window !== "undefined" && window.localStorage
+                  ? window.localStorage.getItem(`verso_admin_${slug}`)
+                  : null);
+              if (token) {
+                navigate(`/${slug}/admin/${token}`);
+              } else {
+                navigate(`/${slug}/admin`);
+              }
             }}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-medium transition-all ${
               currentRole === "admin"

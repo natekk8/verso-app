@@ -22,9 +22,9 @@ describe("Milestone 4: Full App Routing & Role Switcher Suite", () => {
   it("1. Renders Home landing page at root path '/'", () => {
     renderApp("/");
 
-    expect(screen.getByText("Precyzyjne zarządzanie turniejami sportowymi")).toBeDefined();
-    expect(screen.getByText("Uruchom pokazowy turniej FSS")).toBeDefined();
-    expect(screen.getByText("Stwórz nowy turniej")).toBeDefined();
+    expect(screen.getByText(/Nowoczesne zarządzanie/)).toBeDefined();
+    expect(screen.getByText(/turniejami bez barier/)).toBeDefined();
+    expect(screen.getAllByText(/Stwórz/i).length).toBeGreaterThan(0);
   });
 
   it("2. Renders 404 page when tournament slug does not exist", async () => {

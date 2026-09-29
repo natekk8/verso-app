@@ -196,14 +196,14 @@ export const VenuePresenter: React.FC<VenuePresenterProps> = ({ tournament }) =>
       >
         {/* STANDINGS SLIDE */}
         {activeTab === "standings" && (
-          <div className="space-y-8 max-w-5xl mx-auto w-full">
+          <div className="space-y-8 3xl:space-y-12 w-full max-w-6xl 2xl:max-w-7xl 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
             <div className="flex items-center justify-between">
-              <h2 className="text-3xl font-extrabold flex items-center gap-3 tracking-tight">
-                <Trophy className="w-7 h-7 text-amber-400 shrink-0" />
+              <h2 className="text-3xl 2xl:text-4xl 3xl:text-6xl font-extrabold flex items-center gap-3.5 tracking-tight">
+                <Trophy className="w-7 h-7 3xl:w-12 3xl:h-12 text-amber-400 shrink-0" />
                 Klasyfikacja Grupowa
               </h2>
-              <div className="flex items-center gap-3 text-sm text-neutral-500 font-mono">
-                <Clock className="w-4 h-4" />
+              <div className="flex items-center gap-3 text-sm 3xl:text-xl text-neutral-400 font-mono">
+                <Clock className="w-4 h-4 3xl:w-6 3xl:h-6" />
                 <span>{completedCount} / {matches.length} rozegranych</span>
               </div>
             </div>
@@ -272,43 +272,43 @@ export const VenuePresenter: React.FC<VenuePresenterProps> = ({ tournament }) =>
 
         {/* MATCHES SLIDE */}
         {activeTab === "matches" && (
-          <div className="space-y-8 max-w-5xl mx-auto w-full">
-            <h2 className="text-3xl font-extrabold flex items-center gap-3 tracking-tight">
-              <Calendar className="w-7 h-7 text-emerald-400 shrink-0" />
+          <div className="space-y-8 3xl:space-y-12 w-full max-w-6xl 2xl:max-w-7xl 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
+            <h2 className="text-3xl 2xl:text-4xl 3xl:text-6xl font-extrabold flex items-center gap-3.5 tracking-tight">
+              <Calendar className="w-7 h-7 3xl:w-12 3xl:h-12 text-emerald-400 shrink-0" />
               Aktualne i Nadchodzące Mecze
             </h2>
 
             {/* Live matches — highlighted */}
             {liveMatches.length > 0 && (
-              <div className="space-y-3">
-                <span className="text-xs font-mono text-rose-400 uppercase tracking-wider flex items-center gap-2">
-                  <Radio className="w-3 h-3 animate-pulse" />
+              <div className="space-y-4">
+                <span className="text-xs 3xl:text-base font-mono text-rose-400 uppercase tracking-wider flex items-center gap-2">
+                  <Radio className="w-3.5 h-3.5 3xl:w-5 3xl:h-5 animate-pulse" />
                   Mecze NA ŻYWO
                 </span>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 3xl:grid-cols-3 gap-5 3xl:gap-8">
                   {liveMatches.map((m: any) => (
                     <Card
                       key={m._id}
-                      className="p-6 border-rose-500/30 bg-rose-500/[0.07] backdrop-blur-xl"
+                      className="p-6 3xl:p-10 border-rose-500/30 bg-rose-500/[0.07] backdrop-blur-xl"
                     >
                       <div className="flex items-center justify-between mb-5">
                         <Badge variant="emerald" dot pulse size="sm">
                           NA ŻYWO
                         </Badge>
-                        <span className="font-mono text-xs text-neutral-400">
+                        <span className="font-mono text-xs 3xl:text-base text-neutral-400">
                           {m.pitch?.name || "Stół"} · Runda {m.roundNumber}
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-4">
-                        <span className="font-bold text-white text-xl truncate flex-1">
+                        <span className="font-bold text-white text-xl 3xl:text-3xl truncate flex-1">
                           {m.player1?.name || "Zawodnik 1"}
                         </span>
-                        <div className="px-5 py-2.5 rounded-2xl bg-black/50 font-mono text-3xl font-extrabold text-emerald-400 shrink-0 tabular-nums">
+                        <div className="px-5 py-2.5 3xl:px-8 3xl:py-4 rounded-2xl bg-black/50 font-mono text-3xl 3xl:text-5xl font-extrabold text-emerald-400 shrink-0 tabular-nums">
                           {m.sets?.length > 0
                             ? m.sets.map((s: any) => `${s.s1}:${s.s2}`).join(" | ")
                             : "0:0"}
                         </div>
-                        <span className="font-bold text-white text-xl truncate flex-1 text-right">
+                        <span className="font-bold text-white text-xl 3xl:text-3xl truncate flex-1 text-right">
                           {m.player2?.name || "Zawodnik 2"}
                         </span>
                       </div>
@@ -319,25 +319,25 @@ export const VenuePresenter: React.FC<VenuePresenterProps> = ({ tournament }) =>
             )}
 
             {/* Upcoming matches */}
-            <div className="space-y-3">
-              <span className="text-xs font-mono text-neutral-500 uppercase tracking-wider">
+            <div className="space-y-4">
+              <span className="text-xs 3xl:text-base font-mono text-neutral-500 uppercase tracking-wider">
                 Kolejne spotkania
               </span>
               {upcomingMatches.length === 0 ? (
-                <p className="text-neutral-600 text-sm font-mono py-4">
+                <p className="text-neutral-600 text-sm 3xl:text-lg font-mono py-4">
                   Brak zaplanowanych meczów
                 </p>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 3xl:grid-cols-4 gap-5 3xl:gap-8">
                   {upcomingMatches.map((m: any) => (
-                    <Card key={m._id} className="p-5 bg-neutral-950/60 border border-white/[0.07]">
-                      <div className="flex items-center justify-between text-xs text-neutral-500 font-mono mb-3">
+                    <Card key={m._id} className="p-5 3xl:p-8 bg-neutral-950/60 border border-white/[0.07]">
+                      <div className="flex items-center justify-between text-xs 3xl:text-base text-neutral-500 font-mono mb-3">
                         <span className="font-semibold text-white">{m.time || "18:00"}</span>
                         <span>{m.pitch?.name || "Stół"}</span>
                       </div>
-                      <div className="font-semibold text-white text-sm leading-snug">
+                      <div className="font-semibold text-white text-sm 3xl:text-xl leading-snug">
                         <div className="truncate">{m.player1?.name || "TBD"}</div>
-                        <div className="text-neutral-500 text-xs my-1 font-mono">vs</div>
+                        <div className="text-neutral-500 text-xs 3xl:text-base my-1 font-mono">vs</div>
                         <div className="truncate">{m.player2?.name || "TBD"}</div>
                       </div>
                     </Card>
@@ -350,23 +350,24 @@ export const VenuePresenter: React.FC<VenuePresenterProps> = ({ tournament }) =>
 
         {/* ANNOUNCEMENT SLIDE */}
         {activeTab === "announcement" && (
-          <div className="max-w-3xl mx-auto w-full text-center space-y-8">
-            <div className="w-20 h-20 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
-              <Megaphone className="w-10 h-10" />
+          <div className="max-w-4xl 3xl:max-w-6xl mx-auto w-full text-center space-y-8 3xl:space-y-12">
+            <div className="w-20 h-20 3xl:w-32 3xl:h-32 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-400 mx-auto flex items-center justify-center">
+              <Megaphone className="w-10 h-10 3xl:w-16 3xl:h-16" />
             </div>
             <div className="space-y-4">
-              <div className="text-xs font-mono text-amber-500 uppercase tracking-widest">
+              <div className="text-xs 3xl:text-lg font-mono text-amber-500 uppercase tracking-widest">
                 Komunikat Organizatora
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-white leading-relaxed tracking-tight">
+              <p className="text-2xl sm:text-3xl 2xl:text-4xl 3xl:text-6xl font-bold text-white leading-relaxed tracking-tight">
                 {announcementText}
               </p>
             </div>
-            <div className="pt-6 border-t border-white/[0.06] text-xs font-mono text-neutral-700 uppercase tracking-widest">
+            <div className="pt-6 border-t border-white/[0.06] text-xs 3xl:text-base font-mono text-neutral-700 uppercase tracking-widest">
               VERSO TOURNAMENT DISPLAY SYSTEM
             </div>
           </div>
         )}
+
       </main>
 
       {/* Stats Footer Ticker */}

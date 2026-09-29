@@ -5,19 +5,37 @@
 @layer base {
   :root {
     --bg-obsidian: #09090b;
-    --border-hairline: rgba(255, 255, 255, 0.1);
-    --border-hairline-subtle: rgba(255, 255, 255, 0.05);
-    --border-hairline-hover: rgba(255, 255, 255, 0.2);
+    --border-hairline: rgba(255, 255, 255, 0.08);
+    --border-hairline-subtle: rgba(255, 255, 255, 0.04);
+    --border-hairline-hover: rgba(255, 255, 255, 0.16);
     --glass-surface: rgba(18, 18, 20, 0.65);
-    --glass-surface-elevated: rgba(24, 24, 27, 0.75);
+    --glass-surface-elevated: rgba(24, 24, 27, 0.85);
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  }
+
+  * {
+    border-color: var(--border-hairline);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   body {
     background-color: var(--bg-obsidian);
     color: #f4f4f5;
+    font-family: "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+
+  /* Typography optical balance */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.025em;
   }
 }
 
@@ -35,9 +53,9 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  /* Tactile press feedback */
+  /* Tactile press feedback — Emil Kowalski principle */
   .tactile-press {
-    transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease, border-color 150ms ease;
+    transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), background-color 150ms ease, border-color 150ms ease;
   }
   .tactile-press:active {
     transform: scale(0.97);
@@ -45,15 +63,15 @@
 
   /* Hairline borders */
   .border-hairline {
-    border-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.08);
   }
 
   .border-hairline-subtle {
-    border-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.04);
   }
 
   .border-hairline-hover:hover {
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   /* Glass backdrop */
@@ -64,9 +82,9 @@
   }
 
   .glass-card-elevated {
-    background-color: rgba(24, 24, 27, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background-color: rgba(24, 24, 27, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
   }
 }
 
@@ -81,10 +99,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
 }
